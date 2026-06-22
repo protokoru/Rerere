@@ -276,8 +276,9 @@
                 stairsGroup.add(step);
             }
             // 当たり判定用のスロープ（非表示）
-            const slopeCollider = new THREE.Mesh(new THREE.BoxGeometry(stairW, Math.sqrt(100 + stairL*stairL), 1), new THREE.MeshBasicMaterial({visible:false}));
-            slopeCollider.rotation.x = -Math.atan2(10, stairL);
+            const slopeLen = Math.sqrt(100 + stairL*stairL);
+            const slopeCollider = new THREE.Mesh(new THREE.BoxGeometry(stairW, 1, slopeLen), new THREE.MeshBasicMaterial({visible:false}));
+            slopeCollider.rotation.x = Math.atan2(10, stairL);
             slopeCollider.position.set(0, 5, 0);
             slopeCollider.userData.isWall = true; collidableMeshes.push(slopeCollider);
             stairsGroup.add(slopeCollider);
@@ -381,10 +382,13 @@
                 // 重力と床判定
                 this.velocityY -= gravity * delta;
                 let nextY = this.group.position.y + this.velocityY * delta;
-                raycaster.set(this.group.position, new THREE.Vector3(0, -1, 0));
+                const botOrigin = this.group.position.clone(); botOrigin.y += 1.0;
+                raycaster.set(botOrigin, new THREE.Vector3(0, -1, 0));
                 let interY = raycaster.intersectObjects(collidableMeshes);
-                if (interY.length > 0 && nextY <= interY[0].point.y) {
-                    this.group.position.y = interY[0].point.y; this.velocityY = 0;
+                let groundHeight = 0;
+                for(let i=0; i<interY.length; i++){ if(interY[i].face.normal.y > 0.5){ groundHeight = interY[i].point.y; break; } }
+                if (interY.length > 0 && nextY <= groundHeight) {
+                    this.group.position.y = groundHeight; this.velocityY = 0;
                 } else { this.group.position.y = nextY; }
 
                 // ジャンプパッド判定
@@ -608,8 +612,16 @@
                 
                 // 水平方向の壁当たり判定
                 const checkOrigin = camera.position.clone(); checkOrigin.y -= 0.6;
-                if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 0.8) moveVec.x = 0; }
-                if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 0.8) moveVec.z = 0; }
+                if (Math.abs(moveVec.x) > 0.001) { 
+                    raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); 
+                    let interX = raycaster.intersectObjects(collidableMeshes); 
+                    if (interX.length > 0 && interX[0].distance < 0.6 && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; 
+                }
+                if (Math.abs(moveVec.z) > 0.001) { 
+                    raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); 
+                    let interZ = raycaster.intersectObjects(collidableMeshes); 
+                    if (interZ.length > 0 && interZ[0].distance < 0.6 && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; 
+                }
 
                 camera.position.x += moveVec.x; camera.position.x = Math.max(-145, Math.min(145, camera.position.x)); 
                 camera.position.z += moveVec.z; camera.position.z = Math.max(-145, Math.min(145, camera.position.z));
@@ -621,7 +633,9 @@
                 raycaster.set(camera.position, new THREE.Vector3(0, -1, 0));
                 let interY = raycaster.intersectObjects(collidableMeshes);
                 let groundHeight = 0;
-                if (interY.length > 0) groundHeight = interY[0].point.y;
+                for (let i = 0; i < interY.length; i++) {
+                    if (interY[i].face.normal.y > 0.5) { groundHeight = interY[i].point.y; break; }
+                }
 
                 if (nextY <= groundHeight + 1.6) { camera.position.y = groundHeight + 1.6; velocityY = 0; isGrounded = true; } else { camera.position.y = nextY; isGrounded = false; }
 
