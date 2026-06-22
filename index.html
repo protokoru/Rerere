@@ -496,8 +496,9 @@
                 startOnlineSync(); startMySync();
                 if (db && currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { x: 0, y: 20, z: 0, ry: 0, hp: 100, isDead: false, timestamp: serverTimestamp() });
             } else if (gameMode === 'cpu') {
-                // CPU 50人制に変更
-                for(let i=0; i<50; i++) spawnBot();
+                // CPU バトルロイヤル（プレイヤーを含めて50人）
+                for(let i=0; i<49; i++) spawnBot();
+                document.getElementById('score').innerText = `ALIVE: 50`;
             }
         }
 
@@ -654,12 +655,14 @@
                 let interY = raycaster.intersectObjects(collidableMeshes);
                 let groundHeight = 0;
                 for(let i=0; i<interY.length; i++){ if(interY[i].face && interY[i].face.normal.y > 0.5){ groundHeight = interY[i].point.y; break; } }
-                if (interY.length > 0 && nextY <= groundHeight) {
-                    this.group.position.y = groundHeight; this.velocityY = 0;
+                
+                // 地面にめり込まないように 0.8 の高さを維持
+                if (interY.length > 0 && nextY <= groundHeight + 0.8) {
+                    this.group.position.y = groundHeight + 0.8; this.velocityY = 0;
                 } else { this.group.position.y = nextY; }
 
                 jumpPads.forEach(pad => {
-                    if (this.group.position.distanceTo(pad.position) < 3 && this.group.position.y - pad.position.y < 1.0) { this.velocityY = 40; }
+                    if (this.group.position.distanceTo(pad.position) < 3 && Math.abs(this.group.position.y - pad.position.y) < 2.0) { this.velocityY = 40; }
                 });
 
                 // 平行移動のみでプレイヤーを追う（Y軸は変えない）
@@ -695,9 +698,15 @@
             isGameRunning = false; if (document.exitPointerLock) document.exitPointerLock(); else exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
             const startScreen = document.getElementById('start-screen'); startScreen.style.display = 'flex';
+            
+            let resultText = `SCORE/KILLS: ${score}`;
+            if (gameMode === 'cpu') {
+                resultText = `RANK: ${bots.length + 1} / 50`;
+            }
+
             startScreen.innerHTML = `
                 <h1 style="color:#ff0055; text-shadow:0 0 20px #ff0055;">YOU DIED</h1>
-                <p style="font-size:32px;">SCORE/KILLS: ${score}</p>
+                <p style="font-size:32px;">${resultText}</p>
                 <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
                     <button id="restart-btn" style="padding: 15px 30px; font-size: 20px; background-color: #ff0055; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">RESPAWN</button>
                     <button id="menu-btn" style="padding: 15px 30px; font-size: 20px; background-color: #555; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">MENU</button>
@@ -705,7 +714,6 @@
             `;
             document.getElementById('restart-btn').addEventListener('click', () => {
                 if (isTouchDevice) enterGameUI(); else { try { document.body.requestPointerLock(); } catch(e) { enterGameUI(); } }
-                setTimeout(() => { showMainMenu(); }, 100);
             });
             document.getElementById('menu-btn').addEventListener('click', () => {
                 showMainMenu();
@@ -919,8 +927,15 @@
                     if (spawnTimer > 1.5) { spawnTimer = 0; const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 20; const sx = camera.position.x + Math.cos(a)*d, sz = camera.position.z + Math.sin(a)*d; if (sx > -145 && sx < 145 && sz > -145 && sz < 145) enemies.push(new Enemy(sx, sz)); }
                     for (let i = enemies.length - 1; i >= 0; i--) { let e = enemies[i]; e.update(delta, camera.position); if (!e.isDead && e.group.position.distanceTo(camera.position) < 2.0) { damagePlayer(); e.die(); } if (e.isDead && !scene.children.includes(e.group)) enemies.splice(i, 1); }
                 } else if (gameMode === 'cpu') {
-                    if (bots.length < 50) spawnBot();
                     for (let i = bots.length - 1; i >= 0; i--) { let b = bots[i]; b.update(delta, camera.position); if (b.isDead && !scene.children.includes(b.group)) bots.splice(i, 1); }
+                    
+                    document.getElementById('score').innerText = `ALIVE: ${bots.length + (playerHp > 0 ? 1 : 0)}`;
+                    if (bots.length === 0 && playerHp > 0) {
+                        document.getElementById('score').innerText = "VICTORY!";
+                        document.getElementById('score').style.color = "#00ffcc";
+                    } else {
+                        document.getElementById('score').style.color = "#fff";
+                    }
                 } else if (gameMode === 'online') {
                     syncPlayer();
                     for (let uid in otherPlayers) { const p = otherPlayers[uid]; if (!p.isDead) { p.group.position.lerp(p.targetPos, 0.2); p.group.rotation.y += (p.targetRy - p.group.rotation.y) * 0.2; } }
