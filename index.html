@@ -111,15 +111,14 @@
         <div id="score-display">SCORE: <span id="score">0</span></div>
         
         <div id="start-screen">
-            <h1>Multiverse<br>5v5 Arena</h1>
+            <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
             <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
 
-            <!-- クラス（キャラクター）選択 -->
             <div class="class-select" id="class-container">
                 <button class="class-btn active" data-class="soldier">SOLDIER<span>バランス標準</span></button>
-                <button class="class-btn" data-class="tank">TANK<span>高HP / 鈍足 / 硬い</span></button>
-                <button class="class-btn" data-class="scout">SCOUT<span>超高速 / 低HP</span></button>
-                <button class="class-btn" data-class="berserker">BERSERKER<span>高火力 / 紙装甲</span></button>
+                <button class="class-btn" data-class="tank">TANK<span>高HP/鈍足/硬い</span></button>
+                <button class="class-btn" data-class="scout">SCOUT<span>超高速/低HP</span></button>
+                <button class="class-btn" data-class="berserker">BERSERKER<span>高火力/紙装甲</span></button>
             </div>
 
             <div class="mode-select" id="mode-container">
@@ -336,6 +335,7 @@
             collidableMeshes = tempCollidables; jumpPads = tempJumpPads; healItems = tempHealItems;
         }
 
+        // --- 壁生成のバグ修正版 (Scaleを避け、新しいGeometryを作成) ---
         function createRandomBuilding(px, pz, mat, edgeMat, tempCollidables, tempJumpPads) {
             const group = new THREE.Group(); group.position.set(px, 0, pz);
             const w = 15 + Math.random() * 10, d = 15 + Math.random() * 10;
@@ -343,14 +343,23 @@
             const f2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), mat); f2.position.set(0, 10, 0); f2.userData.isWall = true; group.add(f2); tempCollidables.push(f2);
             
             const wallH = 10, wallThick = 0.8;
-            const walls = [ { geo: new THREE.BoxGeometry(w, wallH, wallThick), pos: [0, 5, -d/2] }, { geo: new THREE.BoxGeometry(w, wallH, wallThick), pos: [0, 5, d/2] }, { geo: new THREE.BoxGeometry(wallThick, wallH, d), pos: [-w/2, 5, 0] }, { geo: new THREE.BoxGeometry(wallThick, wallH, d), pos: [w/2, 5, 0] } ];
+            const walls = [ { w: w, h: wallH, d: wallThick, pos: [0, 5, -d/2] }, { w: w, h: wallH, d: wallThick, pos: [0, 5, d/2] }, { w: wallThick, h: wallH, d: d, pos: [-w/2, 5, 0] }, { w: wallThick, h: wallH, d: d, pos: [w/2, 5, 0] } ];
+            
             walls.forEach(wd => {
                 if(Math.random() > 0.25) {
                     if (Math.random() > 0.4) {
-                        const m1 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat); const m2 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat);
-                        if(wd.geo.parameters.width > wd.geo.parameters.depth) { m1.position.set(wd.pos[0] - w*0.3, wd.pos[1], wd.pos[2]); m2.position.set(wd.pos[0] + w*0.3, wd.pos[1], wd.pos[2]); } else { m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3); }
+                        let m1Geo, m2Geo;
+                        if(wd.w > wd.d) {
+                            m1Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d); m2Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d);
+                        } else {
+                            m1Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35); m2Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35);
+                        }
+                        const m1 = new THREE.Mesh(m1Geo, mat); const m2 = new THREE.Mesh(m2Geo, mat);
+                        
+                        if(wd.w > wd.d) { m1.position.set(wd.pos[0] - w*0.3, wd.pos[1], wd.pos[2]); m2.position.set(wd.pos[0] + w*0.3, wd.pos[1], wd.pos[2]); } 
+                        else { m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3); }
                         m1.userData.isWall = true; m2.userData.isWall = true; group.add(m1, m2); tempCollidables.push(m1, m2);
-                    } else { const m = new THREE.Mesh(wd.geo, mat); m.position.set(...wd.pos); m.userData.isWall = true; group.add(m); tempCollidables.push(m); }
+                    } else { const m = new THREE.Mesh(new THREE.BoxGeometry(wd.w, wd.h, wd.d), mat); m.position.set(...wd.pos); m.userData.isWall = true; group.add(m); tempCollidables.push(m); }
                 }
             });
 
@@ -467,20 +476,25 @@
         }
 
         function setupUIEvents() {
-            // モード選択
-            document.getElementById('mode-container').querySelectorAll('.mode-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.getElementById('mode-container').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active'); gameMode = e.target.getAttribute('data-mode');
+            const modeContainer = document.getElementById('mode-container');
+            if (modeContainer) {
+                modeContainer.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        modeContainer.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active'); gameMode = e.target.getAttribute('data-mode');
+                    });
                 });
-            });
-            // クラス選択
-            document.getElementById('class-container').querySelectorAll('.class-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.getElementById('class-container').querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active'); playerClass = e.currentTarget.getAttribute('data-class');
+            }
+            
+            const classContainer = document.getElementById('class-container');
+            if (classContainer) {
+                classContainer.querySelectorAll('.class-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        classContainer.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active'); playerClass = e.currentTarget.getAttribute('data-class');
+                    });
                 });
-            });
+            }
 
             const sensSlider = document.getElementById('sensitivity-slider');
             if(sensSlider) sensSlider.addEventListener('input', (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); });
@@ -493,8 +507,10 @@
                         if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
                         enterLobby();
                     } else {
-                        enterGameUI();
+                        // まずロックを要求（失敗しても無視）
                         if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
+                        // その直後にUI更新とステージ生成を走らせることでフリーズを防止
+                        setTimeout(() => { enterGameUI(); }, 10);
                     }
                 });
             }
@@ -569,13 +585,33 @@
             const cpuBlue = Math.max(0, 5 - blueCount);
             const cpuRed = Math.max(0, 5 - redCount);
 
-            enterGameUI();
             if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
-            startGame(cpuBlue, cpuRed);
+            setTimeout(() => { startGame(cpuBlue, cpuRed); enterGameUI(); }, 10);
         }
 
         function showMainMenu() {
-            document.getElementById('start-screen').style.display = 'flex';
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.display = 'flex';
+            startScreen.innerHTML = `
+                <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
+                <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
+                <div class="class-select" id="class-container">
+                    <button class="class-btn ${playerClass==='soldier'?'active':''}" data-class="soldier">SOLDIER<span>バランス標準</span></button>
+                    <button class="class-btn ${playerClass==='tank'?'active':''}" data-class="tank">TANK<span>高HP/鈍足/硬い</span></button>
+                    <button class="class-btn ${playerClass==='scout'?'active':''}" data-class="scout">SCOUT<span>超高速/低HP</span></button>
+                    <button class="class-btn ${playerClass==='berserker'?'active':''}" data-class="berserker">BERSERKER<span>高火力/紙装甲</span></button>
+                </div>
+                <div class="mode-select" id="mode-container">
+                    <button class="mode-btn ${gameMode==='cpu'?'active':''}" data-mode="cpu">CPU 5v5 BATTLE</button>
+                    <button class="mode-btn ${gameMode==='online'?'active':''}" data-mode="online">ONLINE 5v5 BATTLE</button>
+                    <button class="mode-btn ${gameMode==='score'?'active':''}" data-mode="score">SCORE MODE (SOLO)</button>
+                </div>
+                <div class="settings"><label>SENSITIVITY (視点感度): <span id="sens-val">${sensitivity.toFixed(1)}</span></label><input type="range" id="sensitivity-slider" min="0.1" max="3.0" step="0.1" value="${sensitivity}"></div>
+                <div class="controls-info" id="controls-text"><p>[ WASD ]: 移動 / [ Space ]: ジャンプ / [ Shift ]: ダッシュ / [ マウス ]: 視点</p><p>[ 左クリック ]: 射撃（長押し可）/ [ 1, 2, 3 ]: 武器変更</p></div>
+                <button id="start-btn">GAME START</button>
+            `;
+            if (isTouchDevice) document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ スワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
+            setupUIEvents();
         }
 
         function enterGameUI() {
@@ -634,8 +670,8 @@
             } else { camera.position.set(0, 20, 0); }
             euler.set(0,0,0); camera.quaternion.setFromEuler(euler);
 
-            clock.getDelta();
-            isGameRunning = true; 
+            clock.getDelta(); // 時間のリセット
+            isGameRunning = true; // 生成完了後にアンロック
         }
 
         let lastSyncTime = 0;
@@ -828,9 +864,7 @@
             takeDamage(amount) { this.hp -= amount; this.core.material.color.setHex(0xffffff); setTimeout(() => { if(this.core) this.core.material.color.setHex(0xffaaaa); }, 50); if (this.hp <= 0 && !this.isDead) this.die(); }
         }
 
-        // キャラクター固有の防御力補正を適用
         function damagePlayer(amount = 20) { playerHp -= amount * defenseMultiplier; updatePlayerHpUI(); if (playerHp <= 0) gameOver(); }
-        
         function updatePlayerHpUI() {
             const hpFill = document.getElementById('hp-fill'); 
             hpFill.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + '%';
@@ -839,10 +873,8 @@
             else hpFill.style.backgroundColor = '#ff0000';
             
             document.getElementById('hp-text').innerText = `HP: ${Math.ceil(playerHp)} / ${playerMaxHp}`;
-
             const overlay = document.getElementById('damage-overlay'); overlay.style.opacity = '0.6'; setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
-
         function gameOver(customMsg) {
             isGameRunning = false; if (document.exitPointerLock) document.exitPointerLock(); else exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
@@ -864,11 +896,12 @@
             `;
             document.getElementById('restart-btn').addEventListener('click', () => { 
                 if (gameMode === 'online') { enterLobby(); }
-                else { if (isTouchDevice) enterGameUI(); else { try { document.body.requestPointerLock(); } catch(e) { enterGameUI(); } } }
+                else { if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} } setTimeout(() => { enterGameUI(); }, 10); }
             });
             document.getElementById('menu-btn').addEventListener('click', () => { showMainMenu(); });
         }
 
+        const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
             const weapon = WEAPONS[currentWeaponIndex], now = performance.now();
@@ -883,8 +916,6 @@
 
             const allTargets = targetBodies.concat(collidableMeshes);
             const muzzlePos = new THREE.Vector3(0, 0.05, -0.8).applyMatrix4(activeGroup.matrixWorld); 
-
-            // キャラクター固有のダメージ補正
             const actualDamage = weapon.damage * damageMultiplier;
 
             for (let i = 0; i < weapon.pelletCount; i++) {
@@ -941,16 +972,17 @@
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
         
-        // PCの緊急回避用視点操作（ポインターロックが拒否されても左クリックドラッグで操作可能）
+        let isDragging = false;
         document.addEventListener('mousedown', (e) => {
-            if (isGameRunning && !isTouchDevice && document.pointerLockElement !== document.body) {
-                try { document.body.requestPointerLock(); } catch(err) {}
-            }
+            if (!isGameRunning || isTouchDevice) return;
+            if (document.pointerLockElement !== document.body) { try { document.body.requestPointerLock(); } catch(err) {} }
+            isDragging = true;
         });
+        document.addEventListener('mouseup', () => { isDragging = false; });
         
         function onMouseMove(event) { 
             if (!isGameRunning) return;
-            if (document.pointerLockElement === document.body || (!isTouchDevice && event.buttons === 1)) { 
+            if (document.pointerLockElement === document.body || (!isTouchDevice && isDragging)) { 
                 euler.setFromQuaternion(camera.quaternion); 
                 euler.y -= (event.movementX || 0) * 0.002 * sensitivity; 
                 euler.x -= (event.movementY || 0) * 0.002 * sensitivity; 
