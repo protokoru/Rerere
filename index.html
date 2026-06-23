@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Shotgun Survival - 5v5 Arena</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
-        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
-        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; touch-action: none; }
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; touch-action: none; }
+        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; touch-action: none; }
         #crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin-top: -10px; margin-left: -10px; color: rgba(255, 255, 255, 0.8); font-size: 24px; line-height: 20px; text-align: center; display: none; text-shadow: 0 0 5px rgba(255, 255, 255, 1); transition: color 0.2s, text-shadow 0.2s; }
-        #hud { position: absolute; bottom: 20px; left: 20px; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); display: none; }
-        .hud-item { font-size: 20px; margin-bottom: 8px; font-weight: bold; color: #ccc; }
-        #weapon-name { font-size: 28px; color: #00ffcc; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
-        #ammo-display { font-size: 32px; color: #fff; margin-bottom: 10px; }
+        #hud { position: absolute; bottom: 20px; left: 20px; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.8); display: none; pointer-events: auto; }
+        .hud-item { font-size: 20px; margin-bottom: 8px; font-weight: bold; color: #ccc; pointer-events: none; }
+        #weapon-name { font-size: 28px; color: #00ffcc; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; pointer-events: none; }
+        #ammo-display { font-size: 32px; color: #fff; margin-bottom: 10px; pointer-events: none; }
         
-        #hp-bar { width: 200px; height: 15px; background-color: #333; border: 2px solid #fff; border-radius: 5px; overflow: hidden; }
+        #hp-bar { width: 200px; height: 15px; background-color: #333; border: 2px solid #fff; border-radius: 5px; overflow: hidden; pointer-events: none; }
         #hp-fill { width: 100%; height: 100%; background-color: #00ff88; transition: width 0.2s, background-color 0.2s; }
-        #stamina-bar { width: 200px; height: 8px; background-color: #333; border: 2px solid #aaa; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        #stamina-bar { width: 200px; height: 8px; background-color: #333; border: 2px solid #aaa; border-radius: 4px; overflow: hidden; margin-top: 5px; pointer-events: none; }
         #stamina-fill { width: 100%; height: 100%; background-color: #00bbff; }
 
         #score-display { position: absolute; top: 20px; right: 20px; font-size: 32px; color: #fff; font-weight: bold; display: none; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
         
-        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); z-index: 105; }
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); z-index: 105; touch-action: auto; }
         #start-screen h1 { font-size: 56px; margin-bottom: 5px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
         #start-screen p { font-size: 16px; color: #ccc; margin-bottom: 15px; text-align: center; max-width: 80%; }
         
@@ -43,7 +43,7 @@
         .controls-info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 13px; }
         #start-btn { padding: 15px 40px; font-size: 24px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,204,0.5); }
         #start-btn:hover { background-color: #fff; box-shadow: 0 0 25px rgba(255,255,255,0.8); transform: scale(1.05); }
-        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; }
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         
         /* オンラインロビーUI */
         #lobby-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 15, 30, 0.95); flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; z-index: 110; backdrop-filter: blur(10px); }
@@ -59,7 +59,6 @@
 
         /* モバイルUI */
         #mobile-controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        #touch-look-zone { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; }
         
         #joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 200px; height: 200px; background: rgba(255, 255, 255, 0.1); border: 3px solid rgba(0, 255, 204, 0.4); border-radius: 50%; pointer-events: auto; touch-action: none; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; margin-top: -40px; margin-left: -40px; background: rgba(0, 255, 204, 0.6); border-radius: 50%; pointer-events: none; box-shadow: 0 0 15px rgba(0, 255, 204, 0.8); }
@@ -190,25 +189,18 @@
 
         // プレイヤーのクラスステータス
         let playerClass = 'soldier';
-        let playerMaxHp = 100;
-        let playerHp = 100;
-        let playerBaseSpeed = 50.0;
-        let playerDashSpeed = 80.0;
-        let damageMultiplier = 1.0;
-        let defenseMultiplier = 1.0;
+        let playerMaxHp = 100, playerHp = 100;
+        let playerBaseSpeed = 50.0, playerDashSpeed = 80.0;
+        let damageMultiplier = 1.0, defenseMultiplier = 1.0;
 
-        let stamina = 100;
-        const maxStamina = 100;
-        let isDashing = false;
-        let isStaminaExhausted = false;
+        let stamina = 100; const maxStamina = 100;
+        let isDashing = false, isStaminaExhausted = false;
 
-        let gameTimer = 120;
-        let isTimeUp = false;
-        let myTeam = 'blue';
+        let gameTimer = 120, isTimeUp = false, myTeam = 'blue';
 
         const clock = new THREE.Clock();
 
-        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
+        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null;
         let isShooting = false;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2;
 
@@ -243,7 +235,6 @@
             ctx.fillStyle = '#ffffff'; ctx.fill(); return new THREE.CanvasTexture(canvas);
         }
 
-        // --- ランダムステージ生成 ---
         function buildStage(type) {
             const tempCollidables = [], tempJumpPads = [], tempHealItems = [];
 
@@ -335,7 +326,6 @@
             collidableMeshes = tempCollidables; jumpPads = tempJumpPads; healItems = tempHealItems;
         }
 
-        // --- 壁生成のバグ修正版 (Scaleを避け、新しいGeometryを作成) ---
         function createRandomBuilding(px, pz, mat, edgeMat, tempCollidables, tempJumpPads) {
             const group = new THREE.Group(); group.position.set(px, 0, pz);
             const w = 15 + Math.random() * 10, d = 15 + Math.random() * 10;
@@ -349,13 +339,10 @@
                 if(Math.random() > 0.25) {
                     if (Math.random() > 0.4) {
                         let m1Geo, m2Geo;
-                        if(wd.w > wd.d) {
-                            m1Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d); m2Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d);
-                        } else {
-                            m1Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35); m2Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35);
-                        }
-                        const m1 = new THREE.Mesh(m1Geo, mat); const m2 = new THREE.Mesh(m2Geo, mat);
+                        if(wd.w > wd.d) { m1Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d); m2Geo = new THREE.BoxGeometry(wd.w * 0.35, wd.h, wd.d); } 
+                        else { m1Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35); m2Geo = new THREE.BoxGeometry(wd.w, wd.h, wd.d * 0.35); }
                         
+                        const m1 = new THREE.Mesh(m1Geo, mat); const m2 = new THREE.Mesh(m2Geo, mat);
                         if(wd.w > wd.d) { m1.position.set(wd.pos[0] - w*0.3, wd.pos[1], wd.pos[2]); m2.position.set(wd.pos[0] + w*0.3, wd.pos[1], wd.pos[2]); } 
                         else { m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3); }
                         m1.userData.isWall = true; m2.userData.isWall = true; group.add(m1, m2); tempCollidables.push(m1, m2);
@@ -450,15 +437,13 @@
 
             window.addEventListener('resize', onWindowResize);
             document.addEventListener('keydown', onKeyDown); document.addEventListener('keyup', onKeyUp);
-            document.addEventListener('mousemove', onMouseMove); document.addEventListener('mousedown', onMouseDown);
-            document.addEventListener('mouseup', onMouseUp); document.addEventListener('wheel', onWheel);
+            document.addEventListener('wheel', onWheel);
 
             if (isTouchDevice) setupTouchControls();
+            else setupMouseControls();
 
-            // PointerLock解除時にメニュー表示
             document.addEventListener('pointerlockchange', function() {
                 if (document.pointerLockElement !== document.body && isGameRunning && !isTouchDevice) {
-                    exitGameUI(); showMainMenu();
                 }
             });
             updateWeaponUI();
@@ -507,9 +492,7 @@
                         if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
                         enterLobby();
                     } else {
-                        // まずロックを要求（失敗しても無視）
                         if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
-                        // その直後にUI更新とステージ生成を走らせることでフリーズを防止
                         setTimeout(() => { enterGameUI(); }, 10);
                     }
                 });
@@ -631,8 +614,7 @@
 
         function startGame(cpuBlue = 4, cpuRed = 5) {
             isGameRunning = false; 
-            
-            applyPlayerClass(); // キャラクターのステータスを適用
+            applyPlayerClass();
 
             score = 0; gameTimer = 120; isTimeUp = false; stamina = 100; isStaminaExhausted = false;
             WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false;
@@ -670,8 +652,8 @@
             } else { camera.position.set(0, 20, 0); }
             euler.set(0,0,0); camera.quaternion.setFromEuler(euler);
 
-            clock.getDelta(); // 時間のリセット
-            isGameRunning = true; // 生成完了後にアンロック
+            clock.getDelta();
+            isGameRunning = true; 
         }
 
         let lastSyncTime = 0;
@@ -781,8 +763,8 @@
 
                     const moveVec = moveDir.multiplyScalar((this.state === 'RETREAT' ? 8.0 : 5.0) * delta);
                     const checkOrigin = this.group.position.clone(); checkOrigin.y += 0.5;
-                    if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 0.8 && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
-                    if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 0.8 && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
+                    if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 0.8 && interX[0].face && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
+                    if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 0.8 && interZ[0].face && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
                     
                     this.group.position.x += moveVec.x; this.group.position.z += moveVec.z;
 
@@ -850,8 +832,8 @@
                 const moveVec = dir.multiplyScalar(this.speed * delta);
                 
                 const checkOrigin = this.group.position.clone(); checkOrigin.y += 0.5;
-                if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 1.0 && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
-                if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 1.0 && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
+                if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 1.0 && interX[0].face && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
+                if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 1.0 && interZ[0].face && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
                 this.group.position.x += moveVec.x; this.group.position.z += moveVec.z;
 
                 this.body.rotation.y += delta; this.body.rotation.x += delta * 0.5; this.core.scale.setScalar(1 + Math.sin(performance.now() * 0.01) * 0.1);
@@ -901,7 +883,6 @@
             document.getElementById('menu-btn').addEventListener('click', () => { showMainMenu(); });
         }
 
-        const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
             const weapon = WEAPONS[currentWeaponIndex], now = performance.now();
@@ -968,32 +949,36 @@
         function switchWeapon(index) { if (isReloading || !isGameRunning) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
         function reload() { if (isReloading) return; isReloading = true; const weapon = WEAPONS[currentWeaponIndex]; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
 
-        let keys = {};
+        // --- PC操作 ---
+        function setupMouseControls() {
+            let isDragging = false;
+            document.addEventListener('mousedown', (e) => {
+                if (!isGameRunning || isTouchDevice || e.target.closest('#ui')) return;
+                if (document.pointerLockElement !== document.body) { try { document.body.requestPointerLock(); } catch(err) {} }
+                isDragging = true;
+            });
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            
+            document.addEventListener('mousemove', (event) => { 
+                if (!isGameRunning) return;
+                if (document.pointerLockElement === document.body || (!isTouchDevice && isDragging)) { 
+                    euler.setFromQuaternion(camera.quaternion); 
+                    euler.y -= (event.movementX || 0) * 0.002 * sensitivity; 
+                    euler.x -= (event.movementY || 0) * 0.002 * sensitivity; 
+                    euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); 
+                    camera.quaternion.setFromEuler(euler); 
+                } 
+            });
+            document.addEventListener('mousedown', (event) => { if ((document.pointerLockElement === document.body || !isTouchDevice) && event.button === 0) { isShooting = true; if (isGameRunning) attemptShoot(); } });
+            document.addEventListener('mouseup', (event) => { if (event.button === 0) isShooting = false; });
+        }
+
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
-        
-        let isDragging = false;
-        document.addEventListener('mousedown', (e) => {
-            if (!isGameRunning || isTouchDevice) return;
-            if (document.pointerLockElement !== document.body) { try { document.body.requestPointerLock(); } catch(err) {} }
-            isDragging = true;
-        });
-        document.addEventListener('mouseup', () => { isDragging = false; });
-        
-        function onMouseMove(event) { 
-            if (!isGameRunning) return;
-            if (document.pointerLockElement === document.body || (!isTouchDevice && isDragging)) { 
-                euler.setFromQuaternion(camera.quaternion); 
-                euler.y -= (event.movementX || 0) * 0.002 * sensitivity; 
-                euler.x -= (event.movementY || 0) * 0.002 * sensitivity; 
-                euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); 
-                camera.quaternion.setFromEuler(euler); 
-            } 
-        }
-        function onMouseDown(event) { if ((document.pointerLockElement === document.body || !isTouchDevice) && event.button === 0) { isShooting = true; if (isGameRunning) attemptShoot(); } }
-        function onMouseUp(event) { if (event.button === 0) isShooting = false; }
         function onWheel(event) { if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1); }
 
+        // --- モバイルの全画面＋ボタンスワイプ視点操作 ---
+        let activeTouches = {};
         function setupTouchControls() {
             const touchLookZone = document.getElementById('touch-look-zone'), joystickZone = document.getElementById('joystick-zone'), joystickKnob = document.getElementById('joystick-knob');
             touchLookZone.addEventListener('touchstart', (e) => { e.preventDefault(); if (lookTouchId === null) { lookTouchId = e.changedTouches[0].identifier; previousTouch.x = e.changedTouches[0].clientX; previousTouch.y = e.changedTouches[0].clientY; } }, {passive: false});
