@@ -276,7 +276,7 @@
             const w1 = new THREE.Mesh(wallGeoH, borderWallMat); w1.position.set(0, 20, -half); w1.userData.isWall = true;
             const w2 = new THREE.Mesh(wallGeoH, borderWallMat); w2.position.set(0, 20, half); w2.userData.isWall = true;
             const w3 = new THREE.Mesh(wallGeoH, borderWallMat); w3.position.set(-half, 20, 0); w3.rotation.y = Math.PI/2; w3.userData.isWall = true;
-            const w4 = new Mesh(wallGeoH, borderWallMat); w4.position.set(half, 20, 0); w4.rotation.y = Math.PI/2; w4.userData.isWall = true;
+            const w4 = new THREE.Mesh(wallGeoH, borderWallMat); w4.position.set(half, 20, 0); w4.rotation.y = Math.PI/2; w4.userData.isWall = true;
             stageGroup.add(w1, w2, w3, w4); tempCollidables.push(w1, w2, w3, w4);
 
             if (hasGrid) stageGroup.add(new THREE.GridHelper(mapSize, 50, edgeMat ? edgeMat.color.getHex() : 0xff0055, 0x003322).translateY(0.01));
@@ -310,7 +310,7 @@
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1, cross2);
+                item.add(cross1); item.add(cross2);
                 let px, pz, att=0; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; att++; } while (Math.abs(px) < 10 && Math.abs(pz) < 10 && att<50);
                 item.position.set(px, 1.5, pz); item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item); tempHealItems.push(item);
@@ -904,6 +904,7 @@
             document.getElementById('menu-btn').onclick = () => { showMainMenu(); };
         }
 
+        const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
             const weapon = WEAPONS[currentWeaponIndex], now = performance.now();
@@ -966,9 +967,89 @@
             }
         }
 
-        function updateWeaponUI() { const w = WEAPONS[currentWeaponIndex]; document.getElementById('weapon-name').innerText = w.name; document.getElementById('weapon-name').style.color = '#' + w.color.toString(16).padStart(6, '0'); const ammoEl = document.getElementById('ammo-display'); if (isReloading) { ammoEl.innerText = "RELOADING..."; ammoEl.style.color = "#ff0000"; } else { ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`; ammoEl.style.color = "#fff"; } const ch = document.getElementById('crosshair'); ch.style.color = '#' + w.color.toString(16).padStart(6, '0'); ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`; }
-        function switchWeapon(index) { if (isReloading || !isGameRunning) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
-        function reload() { if (isReloading) return; isReloading = true; const weapon = WEAPONS[currentWeaponIndex]; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
+        // --- 武器UIの更新、武器切り替え、リロード処理 ---
+        function updateWeaponUI() {
+            const w = WEAPONS[currentWeaponIndex];
+            if (!w) return;
+            const nameEl = document.getElementById('weapon-name');
+            if (nameEl) {
+                nameEl.innerText = w.name;
+                nameEl.style.color = '#' + w.color.toString(16).padStart(6, '0');
+            }
+            const ammoEl = document.getElementById('ammo-display');
+            if (ammoEl) {
+                if (isReloading) {
+                    ammoEl.innerText = "RELOADING...";
+                    ammoEl.style.color = "#ff0000";
+                } else {
+                    ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`;
+                    ammoEl.style.color = "#fff";
+                }
+            }
+            const ch = document.getElementById('crosshair');
+            if (ch) {
+                ch.style.color = '#' + w.color.toString(16).padStart(6, '0');
+                ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`;
+            }
+        }
+
+        function switchWeapon(index) {
+            if (isReloading || !isGameRunning) return;
+            if (weaponGroups[currentWeaponIndex]) weaponGroups[currentWeaponIndex].visible = false;
+            currentWeaponIndex = index;
+            if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0;
+            if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1;
+            const group = weaponGroups[currentWeaponIndex];
+            if (group) {
+                group.visible = true;
+                group.position.set(0.25, -0.5, -0.2);
+                group.rotation.x = Math.PI / 4;
+                let t = 0;
+                const anim = setInterval(() => {
+                    t += 0.2;
+                    group.position.y += (-0.25 - group.position.y) * 0.4;
+                    group.position.z += (-0.5 - group.position.z) * 0.4;
+                    group.rotation.x += (0 - group.rotation.x) * 0.4;
+                    if (t >= 1) {
+                        clearInterval(anim);
+                        group.position.set(0.25, -0.25, -0.5);
+                        group.rotation.x = 0;
+                    }
+                }, 20);
+            }
+            updateWeaponUI();
+        }
+
+        function reload() {
+            if (isReloading) return;
+            isReloading = true;
+            const weapon = WEAPONS[currentWeaponIndex];
+            updateWeaponUI();
+            const activeGroup = weaponGroups[currentWeaponIndex];
+            let t = 0;
+            const reloadAnim = setInterval(() => {
+                t += 0.1;
+                if (activeGroup) {
+                    activeGroup.rotation.x = Math.sin(t) * 0.5;
+                    activeGroup.position.y = -0.25 - Math.sin(t) * 0.2;
+                }
+                if (t > Math.PI) {
+                    clearInterval(reloadAnim);
+                    if (activeGroup) {
+                        activeGroup.rotation.x = 0;
+                        activeGroup.position.y = -0.25;
+                    }
+                    weapon.ammo = weapon.maxAmmo;
+                    isReloading = false;
+                    updateWeaponUI();
+                }
+            }, weapon.reloadTime / (Math.PI / 0.1));
+        }
+
+        // --- マウスホイールイベント ---
+        function onWheel(event) {
+            if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1);
+        }
 
         // --- PC操作 ---
         function setupMouseControls() {
@@ -996,7 +1077,6 @@
 
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
-        function onWheel(event) { if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1); }
 
         // --- モバイルの全画面＋ボタンスワイプ視点操作 ---
         let activeTouches = {};
