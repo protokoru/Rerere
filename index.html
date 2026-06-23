@@ -166,10 +166,13 @@
         let isTimeUp = false;
         let myTeam = 'blue';
 
+        // THREE.Clockのインスタンスを定義
+        const clock = new THREE.Clock();
+
         let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
         let previousTouch = { x: 0, y: 0 }, isShooting = false;
 
-        const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2;
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2, playerSpeed = 50.0;
 
         const WEAPONS = [
             { name: "NEON SHOTGUN", ammo: 8, maxAmmo: 8, damage: 25, pelletCount: 10, spread: 0.15, fireRate: 800, reloadTime: 1500, color: 0x00ffcc, recoilXRot: 0.15, auto: false, length: 40 },
@@ -206,6 +209,11 @@
 
         // --- 凝ったランダムステージシステム ---
         function buildStage(type) {
+            // 安全対策：ロード中に描画ループがアクセスするのを防ぐため、一時リストを作成して最後に一括代入する（ダブルバッファリング）
+            const tempCollidables = [];
+            const tempJumpPads = [];
+            const tempHealItems = [];
+
             if (stageGroup) {
                 scene.remove(stageGroup);
                 stageGroup.traverse(child => {
@@ -215,7 +223,6 @@
             }
             stageGroup = new THREE.Group();
             scene.add(stageGroup);
-            collidableMeshes = []; jumpPads = []; healItems = [];
 
             const mapSize = 100;
             const half = mapSize / 2;
@@ -235,7 +242,6 @@
                     ambientLight.intensity = 0.7; dirLight.intensity = 1.2; dirLight.color.setHex(0xffeedd);
                     break;
                 case 'hell':
-                    // 明るく修正
                     fogColor = 0x4a0000; floorColor = 0x2a0500; pillarColor = 0x330a00; envParticleColor = 0xff5500;
                     ambientLight.intensity = 0.8; dirLight.intensity = 1.0; dirLight.color.setHex(0xffaa55);
                     break;
@@ -265,16 +271,18 @@
             const floor = new THREE.Mesh(new THREE.PlaneGeometry(mapSize, mapSize), floorMat);
             floor.rotation.x = -Math.PI / 2; floor.userData.isWall = true;
             stageGroup.add(floor);
-            collidableMeshes.push(floor);
+            tempCollidables.push(floor);
 
             const borderWallMat = new THREE.MeshStandardMaterial({ color: pillarColor, roughness: 1.0, metalness: 0.5 });
             const wallGeoH = new THREE.BoxGeometry(mapSize, 40, 2);
+            
             const w1 = new THREE.Mesh(wallGeoH, borderWallMat); w1.position.set(0, 20, -half); w1.userData.isWall = true;
             const w2 = new THREE.Mesh(wallGeoH, borderWallMat); w2.position.set(0, 20, half); w2.userData.isWall = true;
             const w3 = new THREE.Mesh(wallGeoH, borderWallMat); w3.position.set(-half, 20, 0); w3.rotation.y = Math.PI/2; w3.userData.isWall = true;
             const w4 = new THREE.Mesh(wallGeoH, borderWallMat); w4.position.set(half, 20, 0); w4.rotation.y = Math.PI/2; w4.userData.isWall = true;
-            stageGroup.add(w1, w2, w3, w4);
-            collidableMeshes.push(w1, w2, w3, w4);
+            
+            stageGroup.add(w1); stageGroup.add(w2); stageGroup.add(w3); stageGroup.add(w4);
+            tempCollidables.push(w1, w2, w3, w4);
 
             if (hasGrid) {
                 stageGroup.add(new THREE.GridHelper(mapSize, 50, edgeMat ? edgeMat.color.getHex() : 0xff0055, 0x003322).translateY(0.01));
@@ -282,7 +290,7 @@
 
             const numBuildings = 3 + Math.floor(Math.random() * 2);
             for (let i = 0; i < numBuildings; i++) {
-                createRandomBuilding((Math.random() - 0.5) * (mapSize - 40), (Math.random() - 0.5) * (mapSize - 40), pMat, edgeMat);
+                createRandomBuilding((Math.random() - 0.5) * (mapSize - 40), (Math.random() - 0.5) * (mapSize - 40), pMat, edgeMat, tempCollidables, tempJumpPads);
             }
 
             for(let i=0; i<30; i++) {
@@ -290,10 +298,10 @@
                 let mesh;
                 if (rand < 0.15) {
                     mesh = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.4, 16), new THREE.MeshStandardMaterial({color:0x00ff55, emissive:0x00ff33, emissiveIntensity:1.0}));
-                    mesh.userData.isJumpPad = true; jumpPads.push(mesh);
+                    mesh.userData.isJumpPad = true; tempJumpPads.push(mesh);
                 } else if (rand < 0.45) {
                     mesh = new THREE.Mesh(new THREE.BoxGeometry(8 + Math.random()*6, 8 + Math.random()*8, 2), ironMat);
-                    mesh.rotation.y = Math.random() * Math.PI; mesh.userData.isWall = true; collidableMeshes.push(mesh);
+                    mesh.rotation.y = Math.random() * Math.PI; mesh.userData.isWall = true; tempCollidables.push(mesh);
                 } else {
                     if (type === 'desert') {
                         mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 6+Math.random()*6, 8), new THREE.MeshStandardMaterial({color: 0x3d7a3d, roughness: 0.9}));
@@ -310,7 +318,7 @@
                         if (edgeMat) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat));
                     }
                     mesh.position.y = (mesh.geometry.parameters.height || mesh.geometry.parameters.height === undefined ? 5 : mesh.geometry.parameters.height / 2);
-                    mesh.userData.isWall = true; collidableMeshes.push(mesh);
+                    mesh.userData.isWall = true; tempCollidables.push(mesh);
                 }
 
                 let px, pz;
@@ -323,16 +331,15 @@
             for(let i=0; i<8; i++) {
                 const itemMat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.6 });
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
-                // 十字マーク
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1, cross2);
+                item.add(cross1); item.add(cross2);
 
                 let px, pz; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; } while (Math.abs(px) < 10 && Math.abs(pz) < 10);
                 item.position.set(px, 1.5, pz);
                 item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item);
-                healItems.push(item);
+                tempHealItems.push(item);
             }
 
             const envGeo = new THREE.BufferGeometry();
@@ -342,14 +349,22 @@
             envPoints = new THREE.Points(envGeo, new THREE.PointsMaterial({ size: (type==='sky'||type==='snow')? 1.0 : 0.2, color: envParticleColor, transparent: true, opacity: 0.5 }));
             if(type === 'sky' || type === 'snow') envPoints.material.map = createCircleTexture();
             stageGroup.add(envPoints);
+
+            // シーンの親子関係・行列情報を今すぐ強制的に計算更新する
+            scene.updateMatrixWorld(true);
+
+            // 本番用の配列をこの瞬間に差し替える（ダブルバッファ処理）
+            collidableMeshes = tempCollidables;
+            jumpPads = tempJumpPads;
+            healItems = tempHealItems;
         }
 
-        function createRandomBuilding(px, pz, mat, edgeMat) {
+        function createRandomBuilding(px, pz, mat, edgeMat, tempCollidables, tempJumpPads) {
             const group = new THREE.Group(); group.position.set(px, 0, pz);
             const w = 15 + Math.random() * 10, d = 15 + Math.random() * 10;
             
             const f2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), mat); f2.position.set(0, 10, 0);
-            f2.userData.isWall = true; group.add(f2); collidableMeshes.push(f2);
+            f2.userData.isWall = true; group.add(f2); tempCollidables.push(f2);
             
             const wallH = 10, wallThick = 0.8;
             const walls = [
@@ -369,7 +384,7 @@
                             m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3);
                         }
                         m1.userData.isWall = true; m2.userData.isWall = true;
-                        group.add(m1, m2); collidableMeshes.push(m1, m2);
+                        group.add(m1); group.add(m2); tempCollidables.push(m1, m2);
                     } else {
                         const m = new THREE.Mesh(wd.geo, mat); m.position.set(...wd.pos); m.userData.isWall = true;
                         group.add(m); collidableMeshes.push(m);
@@ -380,7 +395,7 @@
             if(Math.random() > 0.5) {
                 const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 10, 1.5), mat);
                 pillar.position.set((Math.random()-0.5)*w*0.6, 5, (Math.random()-0.5)*d*0.6);
-                pillar.userData.isWall = true; group.add(pillar); collidableMeshes.push(pillar);
+                pillar.userData.isWall = true; group.add(pillar); tempCollidables.push(pillar);
             }
 
             const stairDir = Math.floor(Math.random()*4);
@@ -398,7 +413,7 @@
             slopeCollider.rotation.x = Math.atan2(10, stairL);
             slopeCollider.position.set(0, 5, 0);
             slopeCollider.userData.isWall = true;
-            collidableMeshes.push(slopeCollider);
+            tempCollidables.push(slopeCollider);
             stairsGroup.add(slopeCollider);
 
             if(stairDir===0) { stairsGroup.position.set(0, 0, d/2 + stairL/2); }
@@ -503,7 +518,7 @@
             const pump = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.25), woodMat); pump.position.set(0, -0.05, -0.3); pump.name = "pump";
             const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.1), woodMat); grip.position.set(0, -0.15, 0.2); grip.rotation.x = -Math.PI/6;
             const sight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.02), sgHl); sight.position.set(0, 0.05, -0.78);
-            sgGroup.add(b1, b2, rec, pump, grip, sight); weaponGroups.push(sgGroup);
+            sgGroup.add(b1); sgGroup.add(b2); sgGroup.add(rec); sgGroup.add(pump); sgGroup.add(grip); sgGroup.add(sight); weaponGroups.push(sgGroup);
 
             const rfGroup = new THREE.Group(); const rfHl = new THREE.MeshBasicMaterial({ color: WEAPONS[1].color });
             const rfBody = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 0.6), darkMat); rfBody.position.set(0, 0, -0.15);
@@ -515,7 +530,7 @@
             const rfGrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.08), woodMat); rfGrip.position.set(0, -0.18, 0.15); rfGrip.rotation.x = -Math.PI/8;
             const rfSightBase = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.1), metalMat); rfSightBase.position.set(0, 0.1, 0);
             const rfHolo = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), new THREE.MeshBasicMaterial({color: 0xff0055, transparent: true, opacity: 0.7, side: THREE.DoubleSide})); rfHolo.position.set(0, 0.15, -0.05);
-            rfGroup.add(rfBody, rfStock, rfBarrelTop, rfBarrelBot, rfCore, rfMag, rfGrip, rfSightBase, rfHolo); weaponGroups.push(rfGroup);
+            rfGroup.add(rfBody); rfGroup.add(rfStock); rfGroup.add(rfBarrelTop); rfGroup.add(rfBarrelBot); rfGroup.add(rfCore); rfGroup.add(rfMag); rfGroup.add(rfGrip); rfGroup.add(rfSightBase); rfGroup.add(rfHolo); weaponGroups.push(rfGroup);
 
             const rgGroup = new THREE.Group(); const rgHl = new THREE.MeshBasicMaterial({ color: WEAPONS[2].color });
             const rgBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.4), darkMat); rgBody.position.set(0, 0, 0.1);
@@ -524,7 +539,7 @@
             const rgEnergy = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.7), rgHl); rgEnergy.position.set(0, 0, -0.45);
             const rgScope = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2).rotateX(Math.PI/2), metalMat); rgScope.position.set(0, 0.12, 0.05);
             const rgGrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.1), woodMat); rgGrip.position.set(0, -0.15, 0.2); rgGrip.rotation.x = -Math.PI/6;
-            rgGroup.add(rgBody, rail1, rail2, rgEnergy, rgScope, rgGrip); weaponGroups.push(rgGroup);
+            rgGroup.add(rgBody); rgGroup.add(rail1); rgGroup.add(rail2); rgGroup.add(rgEnergy); rgGroup.add(rgScope); rgGroup.add(rgGrip); weaponGroups.push(rgGroup);
 
             weaponGroups.forEach((group, index) => { group.position.set(0.25, -0.25, -0.5); group.visible = (index === currentWeaponIndex); camera.add(group); });
         }
@@ -545,7 +560,10 @@
         }
 
         function startGame() {
-            isGameRunning = true; score = 0; playerHp = 100; gameTimer = 120; isTimeUp = false; stamina = 100;
+            // 安全対策：ステージ構築がすべて完了するまでゲームロジックのループ進行を一時ロック
+            isGameRunning = false; 
+
+            score = 0; playerHp = 100; gameTimer = 120; isTimeUp = false; stamina = 100;
             WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false;
             document.getElementById('score').innerText = score;
             document.getElementById('hp-fill').style.width = '100%'; document.getElementById('hp-fill').style.backgroundColor = '#00ff88';
@@ -579,6 +597,12 @@
                 for(let i=0; i<5; i++) spawnBot('red', (Math.random()-0.5)*30, -30 - Math.random()*10);
             } else { camera.position.set(0, 20, 0); }
             euler.set(0,0,0); camera.quaternion.setFromEuler(euler);
+
+            // クロックのリセットをして、前回のゲームとのdelta時間の蓄積を防ぐ
+            clock.getDelta();
+
+            // ステージ生成とプレイヤー配置が完全に完了したため、ゲーム進行をアンロック
+            isGameRunning = true; 
         }
 
         // --- オンライン通信 ---
@@ -625,10 +649,10 @@
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), mat); body.position.y = 0.6;
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat); head.position.y = 1.45;
             const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.55), new THREE.MeshBasicMaterial({color: 0xffffff})); visor.position.set(0, 1.45, -0.1);
-            group.add(body, head, visor); return { group, body, head };
+            group.add(body); group.add(head); group.add(visor); return { group, body, head };
         }
 
-        // --- 賢くなったボットAIクラス (ストレイフ・撤退追加) ---
+        // --- ボットAIクラス ---
         class Bot {
             constructor(x, z, team) {
                 const colorHex = team === 'blue' ? 0x00bbff : 0xff3355;
@@ -677,7 +701,6 @@
                     }
                 }
 
-                // AIステートマシン
                 this.stateTimer -= delta;
                 if (this.stateTimer <= 0) {
                     this.stateTimer = 1.0 + Math.random() * 1.5;
@@ -685,7 +708,7 @@
                     else if (minDist < 15) { this.state = 'STRAFE'; this.strafeDir = Math.random() > 0.5 ? 1 : -1; }
                     else { this.state = 'CHASE'; }
                     
-                    if (Math.random() < 0.2 && this.isGrounded) this.velocityY = jumpForce; // たまにジャンプ
+                    if (Math.random() < 0.2 && this.isGrounded) this.velocityY = jumpForce; 
                 }
 
                 if (closestTarget) {
@@ -756,7 +779,7 @@
                 this.body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0x111111, flatShading: true, roughness: 0.7, metalness: 0.5 }));
                 const wireMesh = new THREE.Mesh(bodyGeo, new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true })); wireMesh.scale.setScalar(1.02); this.body.add(wireMesh);
                 this.core = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffaaaa })); this.core.add(new THREE.PointLight(0xff0055, 1, 5));
-                this.group.add(this.body, this.core); this.group.position.set(x, 20, z); scene.add(this.group);
+                this.group.add(this.body); this.group.add(this.core); this.group.position.set(x, 20, z); scene.add(this.group);
                 this.hp = 100; this.speed = 3.0 + Math.random() * 2.0; this.isDead = false; this.timeOffset = Math.random() * Math.PI * 2;
                 this.velocityY = 0;
             }
@@ -920,37 +943,49 @@
 
         let spawnTimer = 0;
         function animate() {
-            requestAnimationFrame(animate); const time = performance.now(), delta = Math.min((time - prevTime) / 1000, 0.1); prevTime = time;
+            requestAnimationFrame(animate); const time = performance.now();
+            let delta = Math.min(clock.getDelta(), 0.1);
 
-            if (playerCollider) { playerCollider.position.copy(camera.position); playerCollider.position.y -= 0.6; }
+            // 安全対策：時間差分(delta)や数値に異常(NaN)が入るのを防ぐ
+            if (isNaN(delta) || delta <= 0) delta = 0.016;
+
+            // プレイヤー位置の安全チェック (NaNの強制復帰)
+            if (camera && (isNaN(camera.position.x) || isNaN(camera.position.y) || isNaN(camera.position.z))) {
+                camera.position.set(0, 10, 40);
+                velocityY = 0;
+            }
+
+            if (playerCollider && camera) { playerCollider.position.copy(camera.position); playerCollider.position.y -= 0.6; }
 
             // 勝利時の花火エフェクト
             if (!isGameRunning && document.querySelector('.victory-text') && Math.random() < 0.05) { launchFirework(); }
 
-            // 回復アイテムの更新
-            healItems.forEach(item => {
-                if (item.userData.active) {
-                    item.rotation.y += delta * 2; item.rotation.x += delta;
-                    if (isGameRunning && playerHp > 0 && playerHp < 100 && camera.position.distanceTo(item.position) < 3.0) {
-                        playerHp = Math.min(100, playerHp + 30); updatePlayerHpUI();
-                        item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15;
-                        createParticles(item.position, 0x00ff00, 20, 3.0);
-                    }
-                    bots.forEach(b => {
-                        if (!b.isDead && b.hp < 100 && b.group.position.distanceTo(item.position) < 3.0) {
-                            b.hp = Math.min(100, b.hp + 30);
+            // 回復アイテムの更新 (配列が初期化中の競合を避けるために保護)
+            if (healItems && healItems.length > 0) {
+                healItems.forEach(item => {
+                    if (item && item.userData && item.userData.active) {
+                        item.rotation.y += delta * 2; item.rotation.x += delta;
+                        if (isGameRunning && playerHp > 0 && playerHp < 100 && camera.position.distanceTo(item.position) < 3.0) {
+                            playerHp = Math.min(100, playerHp + 30); updatePlayerHpUI();
                             item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15;
                             createParticles(item.position, 0x00ff00, 20, 3.0);
                         }
-                    });
-                } else {
-                    item.userData.respawnTimer -= delta;
-                    if (item.userData.respawnTimer <= 0) { item.userData.active = true; item.visible = true; }
-                }
-            });
+                        bots.forEach(b => {
+                            if (b && !b.isDead && b.hp < 100 && b.group && b.group.position.distanceTo(item.position) < 3.0) {
+                                b.hp = Math.min(100, b.hp + 30);
+                                item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15;
+                                createParticles(item.position, 0x00ff00, 20, 3.0);
+                            }
+                        });
+                    } else if (item && item.userData) {
+                        item.userData.respawnTimer -= delta;
+                        if (item.userData.respawnTimer <= 0) { item.userData.active = true; item.visible = true; }
+                    }
+                });
+            }
 
-            if (isGameRunning) {
-                if (isShooting && WEAPONS[currentWeaponIndex].auto) attemptShoot();
+            if (isGameRunning && collidableMeshes.length > 0) {
+                if (isShooting && WEAPONS[currentWeaponIndex] && WEAPONS[currentWeaponIndex].auto) attemptShoot();
 
                 // ダッシュ（スプリント）とスタミナ管理
                 let currentSpeed = playerSpeed;
@@ -961,7 +996,8 @@
                     stamina += 15 * delta;
                 }
                 stamina = Math.max(0, Math.min(maxStamina, stamina));
-                document.getElementById('stamina-fill').style.width = stamina + '%';
+                const stamFill = document.getElementById('stamina-fill');
+                if (stamFill) stamFill.style.width = stamina + '%';
 
                 velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta;
                 direction.z = Math.max(-1, Math.min(1, (Number(moveForward) - Number(moveBackward)) + joystickVector.y));
@@ -994,21 +1030,38 @@
                 jumpPads.forEach(pad => { if (camera.position.distanceTo(pad.position) < 3 && camera.position.y - pad.position.y < 3.0) { velocityY = 40; isGrounded = false; } });
 
                 const activeGroup = weaponGroups[currentWeaponIndex];
-                if (isMovingInput && !isReloading && isGrounded) { activeGroup.position.y = -0.25 + Math.sin(time * 0.01) * 0.02; activeGroup.position.x = 0.25 + Math.cos(time * 0.005) * 0.01; } else if (!isReloading) { activeGroup.position.y += (-0.25 - activeGroup.position.y) * 0.1; activeGroup.position.x += (0.25 - activeGroup.position.x) * 0.1; }
+                if (activeGroup) {
+                    if (isMovingInput && !isReloading && isGrounded) { activeGroup.position.y = -0.25 + Math.sin(time * 0.01) * 0.02; activeGroup.position.x = 0.25 + Math.cos(time * 0.005) * 0.01; } 
+                    else if (!isReloading) { activeGroup.position.y += (-0.25 - activeGroup.position.y) * 0.1; activeGroup.position.x += (0.25 - activeGroup.position.x) * 0.1; }
+                }
 
                 if (gameMode === 'score') {
                     spawnTimer += delta;
                     if (spawnTimer > 1.5) { spawnTimer = 0; const a = Math.random() * Math.PI * 2, d = 25 + Math.random() * 15; const sx = camera.position.x + Math.cos(a)*d, sz = camera.position.z + Math.sin(a)*d; if (sx > -48 && sx < 48 && sz > -48 && sz < 48) enemies.push(new Enemy(sx, sz)); }
-                    for (let i = enemies.length - 1; i >= 0; i--) { let e = enemies[i]; e.update(delta, camera.position); if (!e.isDead && e.group.position.distanceTo(camera.position) < 2.0) { damagePlayer(); e.die(); } if (e.isDead && !scene.children.includes(e.group)) enemies.splice(i, 1); }
+                    for (let i = enemies.length - 1; i >= 0; i--) { let e = enemies[i]; if(e) { e.update(delta, camera.position); if (!e.isDead && e.group.position.distanceTo(camera.position) < 2.0) { damagePlayer(); e.die(); } if (e.isDead && !scene.children.includes(e.group)) enemies.splice(i, 1); } }
                 } else if (gameMode === 'cpu' || gameMode === 'online') {
+                    // チームデスマッチ更新ループ
+                    let blueAlive = playerHp > 0 && myTeam === 'blue' ? 1 : 0; 
+                    let redAlive = playerHp > 0 && myTeam === 'red' ? 1 : 0;
+
+                    for (let i = bots.length - 1; i >= 0; i--) { 
+                        let b = bots[i]; 
+                        if (b) {
+                            if (!b.isDead) b.team === 'blue' ? blueAlive++ : redAlive++; 
+                            b.update(delta); 
+                            if (b.isDead && !scene.children.includes(b.group)) bots.splice(i, 1); 
+                        }
+                    }
+                    for(let uid in otherPlayers) { let op = otherPlayers[uid]; if (op && !op.isDead) op.team === 'blue' ? blueAlive++ : redAlive++; }
+
+                    const scoreBoard = document.getElementById('team-score');
+                    if (scoreBoard) scoreBoard.innerHTML = `<span style="color:#00bbff;">BLUE: ${blueAlive}</span> | <span style="color:#ff3355;">RED: ${redAlive}</span>`;
+
+                    // タイマー減算
                     gameTimer -= delta;
-                    let m = Math.floor(Math.max(0, gameTimer) / 60); let s = Math.floor(Math.max(0, gameTimer) % 60).toString().padStart(2, '0'); document.getElementById('timer').innerText = `${m}:${s}`;
-                    let blueAlive = playerHp > 0 && myTeam === 'blue' ? 1 : 0; let redAlive = playerHp > 0 && myTeam === 'red' ? 1 : 0;
-
-                    for (let i = bots.length - 1; i >= 0; i--) { let b = bots[i]; if (!b.isDead) b.team === 'blue' ? blueAlive++ : redAlive++; b.update(delta); if (b.isDead && !scene.children.includes(b.group)) bots.splice(i, 1); }
-                    for(let uid in otherPlayers) { let op = otherPlayers[uid]; if (!op.isDead) op.team === 'blue' ? blueAlive++ : redAlive++; }
-
-                    document.getElementById('team-score').innerHTML = `<span style="color:#00bbff;">BLUE: ${blueAlive}</span> | <span style="color:#ff3355;">RED: ${redAlive}</span>`;
+                    let m = Math.floor(Math.max(0, gameTimer) / 60); let s = Math.floor(Math.max(0, gameTimer) % 60).toString().padStart(2, '0'); 
+                    const timerEl = document.getElementById('timer');
+                    if (timerEl) timerEl.innerText = `${m}:${s}`;
 
                     if (gameTimer <= 0 || blueAlive === 0 || redAlive === 0 || playerHp <= 0) {
                         isTimeUp = true; let resultMsg = "";
