@@ -21,12 +21,17 @@
 
         #score-display { position: absolute; top: 20px; right: 20px; font-size: 32px; color: #fff; font-weight: bold; display: none; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
         
-        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); z-index: 105; touch-action: auto; }
-        #start-screen h1 { font-size: 56px; margin-bottom: 5px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
-        #start-screen p { font-size: 16px; color: #ccc; margin-bottom: 15px; text-align: center; max-width: 80%; }
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); z-index: 105; touch-action: auto; overflow-y: auto; padding: 20px 0; }
+        #start-screen h1 { font-size: 56px; margin-top: 20px; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
+        
+        /* スタートボタンの強調と配置調整 */
+        #start-btn { padding: 15px 50px; font-size: 28px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 20px rgba(0,255,204,0.6); margin-bottom: 25px; }
+        #start-btn:hover { background-color: #fff; box-shadow: 0 0 30px rgba(255,255,255,1.0); transform: scale(1.05); }
+
+        #start-screen p.desc { font-size: 16px; color: #ccc; margin-bottom: 20px; text-align: center; max-width: 80%; }
         
         /* クラス選択UI */
-        .class-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .class-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; max-width: 600px; }
         .class-btn { padding: 10px; font-size: 16px; background: rgba(255,255,255,0.1); border: 2px solid #555; color: #ccc; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-weight: bold; width: 130px; }
         .class-btn.active { background: rgba(0,255,204,0.3); border-color: #00ffcc; color: #fff; text-shadow: 0 0 5px #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.5); }
         .class-btn span { font-size: 12px; font-weight: normal; display: block; margin-top: 5px; color: #aaa; }
@@ -40,9 +45,8 @@
         .settings label { display: block; font-size: 14px; color: #aaa; margin-bottom: 5px; }
         .settings input[type=range] { width: 200px; cursor: pointer; }
         
-        .controls-info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 13px; }
-        #start-btn { padding: 15px 40px; font-size: 24px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,204,0.5); }
-        #start-btn:hover { background-color: #fff; box-shadow: 0 0 25px rgba(255,255,255,0.8); transform: scale(1.05); }
+        .controls-info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 13px; max-width: 90%; }
+        
         #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         
         /* オンラインロビーUI */
@@ -123,10 +127,14 @@
         </div>
         <div id="score-display">SCORE: <span id="score">0</span></div>
         
-        <!-- スタートメニュー (固定HTML) -->
+        <!-- スタートメニュー (HTML構造を固定化してイベント消失を防止) -->
         <div id="start-screen">
             <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
-            <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
+            
+            <!-- GAME STARTボタンをタイトルのすぐ下に配置 -->
+            <button id="start-btn">GAME START</button>
+
+            <p class="desc">2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
 
             <div class="class-select" id="class-container">
                 <button class="class-btn active" data-class="soldier">SOLDIER<span>バランス標準</span></button>
@@ -150,10 +158,8 @@
                 <p>[ WASD ]: 移動 / [ Space ]: ジャンプ / [ Shift ]: ダッシュ / [ マウス ]: 視点</p>
                 <p>[ 左クリック ]: 射撃（長押し可）/ [ 1, 2, 3 ]: 武器変更</p>
             </div>
-            <button id="start-btn">GAME START</button>
         </div>
 
-        <!-- ロビー画面 -->
         <div id="lobby-screen">
             <h2 style="color:#00ffcc; font-size:48px; text-shadow:0 0 20px #00ffcc;">MATCHING LOBBY</h2>
             <div id="lobby-players">WAITING FOR PLAYERS... (1/10)</div>
@@ -179,22 +185,24 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         let db = null, auth = null, currentUser = null;
-        let unsubscribePlayers = null, unsubscribeMe = null;
-        let lobbyUnsubscribe = null, myReadyStatus = false, onlinePlayerCount = 0;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        if (firebaseConfig) {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app); db = getFirestore(app);
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-            };
-            initAuth();
-            onAuthStateChanged(auth, (user) => { currentUser = user; });
-        }
+        try {
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            if (firebaseConfig) {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app); db = getFirestore(app);
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                        else await signInAnonymously(auth);
+                    } catch(e) {}
+                };
+                initAuth();
+                onAuthStateChanged(auth, (user) => { currentUser = user; });
+            }
+        } catch(e) { console.error("Firebase init failed", e); }
 
         window.addEventListener('beforeunload', () => {
             if (currentUser && db) {
@@ -225,8 +233,13 @@
         let gameTimer = 120, isTimeUp = false, myTeam = 'blue';
 
         const clock = new THREE.Clock();
+        let keys = {};
+        
+        // 5v5 グローバル設定
+        let globalCpuBlue = 4;
+        let globalCpuRed = 5;
 
-        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
+        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null, previousTouch = { x: 0, y: 0 };
         let isShooting = false;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2;
 
@@ -246,6 +259,7 @@
         let playerCollider; 
 
         const particleGeo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+        let unsubscribePlayers = null, unsubscribeMe = null, lobbyUnsubscribe = null, myReadyStatus = false, onlinePlayerCount = 0;
 
         init();
         animate();
@@ -336,7 +350,7 @@
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1, cross2);
+                item.add(cross1); item.add(cross2);
                 let px, pz, att=0; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; att++; } while (Math.abs(px) < 10 && Math.abs(pz) < 10 && att<50);
                 item.position.set(px, 1.5, pz); item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item); tempHealItems.push(item);
@@ -353,6 +367,7 @@
             collidableMeshes = tempCollidables; jumpPads = tempJumpPads; healItems = tempHealItems;
         }
 
+        // --- 安全な壁生成処理 ---
         function createRandomBuilding(px, pz, mat, edgeMat, tempCollidables, tempJumpPads) {
             const group = new THREE.Group(); group.position.set(px, 0, pz);
             const w = 15 + Math.random() * 10, d = 15 + Math.random() * 10;
@@ -461,7 +476,7 @@
             buildStage('neon');
             createWeapons();
             
-            // イベントリスナーの登録
+            // 全てのイベント登録をここで行う（HTMLの書き換えによる消失を防止）
             setupUIEvents();
 
             window.addEventListener('resize', onWindowResize);
@@ -485,72 +500,96 @@
             playerHp = playerMaxHp;
         }
 
-        // --- DOMのイベント登録 ---
+        // --- 安全なUIイベント登録 ---
         function setupUIEvents() {
-            document.getElementById('mode-container').addEventListener('click', (e) => {
-                if(e.target.closest('.mode-btn')) {
-                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            const modeContainer = document.getElementById('mode-container');
+            if (modeContainer) {
+                modeContainer.onclick = (e) => {
                     const btn = e.target.closest('.mode-btn');
-                    btn.classList.add('active'); 
-                    gameMode = btn.getAttribute('data-mode');
-                }
-            });
+                    if (btn) {
+                        modeContainer.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active'); 
+                        gameMode = btn.getAttribute('data-mode');
+                    }
+                };
+            }
             
-            document.getElementById('class-container').addEventListener('click', (e) => {
-                if(e.target.closest('.class-btn')) {
-                    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+            const classContainer = document.getElementById('class-container');
+            if (classContainer) {
+                classContainer.onclick = (e) => {
                     const btn = e.target.closest('.class-btn');
-                    btn.classList.add('active'); 
-                    playerClass = btn.getAttribute('data-class');
-                }
-            });
+                    if (btn) {
+                        classContainer.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active'); 
+                        playerClass = btn.getAttribute('data-class');
+                    }
+                };
+            }
 
-            document.getElementById('sensitivity-slider').addEventListener('input', (e) => { 
-                sensitivity = parseFloat(e.target.value); 
-                document.getElementById('sens-val').innerText = sensitivity.toFixed(1); 
-            });
+            const sensSlider = document.getElementById('sensitivity-slider');
+            if(sensSlider) sensSlider.oninput = (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); };
             
-            document.getElementById('start-btn').addEventListener('click', () => {
-                if (gameMode === 'online') {
-                    if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
-                    enterLobby();
-                } else {
-                    if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(err) {} }
-                    enterGameUI(); 
-                }
-            });
+            const startBtn = document.getElementById('start-btn');
+            if(startBtn) {
+                startBtn.onclick = () => {
+                    if (gameMode === 'online') {
+                        if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
+                        enterLobby();
+                    } else {
+                        globalCpuBlue = 4;
+                        globalCpuRed = 5;
+                        // ロック要求（拒否されても進行する）
+                        if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
+                        enterGameUI(); 
+                    }
+                };
+            }
 
-            document.getElementById('ready-btn').addEventListener('click', () => {
-                if (!myReadyStatus && onlinePlayerCount >= 2) {
-                    myReadyStatus = true;
-                    const rbtn = document.getElementById('ready-btn');
-                    rbtn.innerText = "WAITING FOR OTHERS..."; rbtn.style.backgroundColor = "#555"; rbtn.style.color = "#fff"; rbtn.style.cursor = "not-allowed";
-                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid), { ready: true }).catch(()=>{});
-                }
-            });
+            const readyBtn = document.getElementById('ready-btn');
+            if (readyBtn) {
+                readyBtn.onclick = () => {
+                    if (!myReadyStatus && onlinePlayerCount >= 2) {
+                        myReadyStatus = true;
+                        readyBtn.innerText = "WAITING FOR OTHERS..."; readyBtn.style.backgroundColor = "#555"; readyBtn.style.color = "#fff"; readyBtn.style.cursor = "not-allowed";
+                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid), { ready: true }).catch(()=>{});
+                    }
+                };
+            }
 
-            document.getElementById('leave-lobby-btn').addEventListener('click', async () => {
-                if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
-                if (currentUser && db) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid)).catch(()=>{});
-                document.getElementById('lobby-screen').style.display = 'none'; showMainMenu();
-            });
+            const leaveBtn = document.getElementById('leave-lobby-btn');
+            if (leaveBtn) {
+                leaveBtn.onclick = async () => {
+                    if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
+                    if (currentUser && db) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid)).catch(()=>{});
+                    document.getElementById('lobby-screen').style.display = 'none'; showMainMenu();
+                };
+            }
 
-            document.getElementById('retry-btn').addEventListener('click', () => {
-                document.getElementById('gameover-screen').style.display = 'none';
-                if (gameMode === 'online') { enterLobby(); }
-                else { 
-                    if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} } 
-                    enterGameUI(); 
-                }
-            });
+            const retryBtn = document.getElementById('retry-btn');
+            if (retryBtn) {
+                retryBtn.onclick = () => {
+                    document.getElementById('gameover-screen').style.display = 'none';
+                    if (gameMode === 'online') { enterLobby(); }
+                    else { 
+                        globalCpuBlue = 4;
+                        globalCpuRed = 5;
+                        if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} } 
+                        enterGameUI(); 
+                    }
+                };
+            }
 
-            document.getElementById('menu-btn').addEventListener('click', () => {
-                document.getElementById('gameover-screen').style.display = 'none';
-                showMainMenu();
-            });
+            const menuBtn = document.getElementById('menu-btn');
+            if (menuBtn) {
+                menuBtn.onclick = () => {
+                    document.getElementById('gameover-screen').style.display = 'none';
+                    showMainMenu();
+                };
+            }
 
             if (isTouchDevice) {
-                document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ 画面のどこでもスワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
+                const ct = document.getElementById('controls-text');
+                if (ct) ct.innerHTML = `<p>[ ジョイスティック ]:移動 / [ 画面のどこでもスワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
             }
         }
 
@@ -598,15 +637,16 @@
             let blueCount = 0, redCount = 0;
             uids.forEach((u, idx) => { if (idx % 2 === 0) blueCount++; else redCount++; });
             
-            const cpuBlue = Math.max(0, 5 - blueCount);
-            const cpuRed = Math.max(0, 5 - redCount);
+            globalCpuBlue = Math.max(0, 5 - blueCount);
+            globalCpuRed = Math.max(0, 5 - redCount);
 
             if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
             enterGameUI();
-            startGame(cpuBlue, cpuRed);
+            startGame(globalCpuBlue, globalCpuRed);
         }
 
         function showMainMenu() {
+            // CSSのdisplayを切り替えるだけで要素を復活させる（イベントリスナーは剥がれない）
             document.getElementById('start-screen').style.display = 'flex';
         }
 
@@ -632,16 +672,25 @@
             return { group, body: collider, head: collider };
         }
 
+        // UIを切り替えてから少し遅延してゲームを開始（フリーズ防止の遅延ロード）
         function enterGameUI() {
-            document.getElementById('start-screen').style.display = 'none'; document.getElementById('crosshair').style.display = 'block';
-            document.getElementById('hud').style.display = 'block'; document.getElementById('score-display').style.display = 'block';
+            document.getElementById('start-screen').style.display = 'none'; 
+            document.getElementById('crosshair').style.display = 'block';
+            document.getElementById('hud').style.display = 'block'; 
+            document.getElementById('score-display').style.display = 'block';
             if (isTouchDevice) { document.getElementById('touch-look-zone').style.display = 'block'; document.getElementById('mobile-controls').style.display = 'block'; }
-            if (!isGameRunning) startGame();
+            
+            if (!isGameRunning) {
+                setTimeout(() => {
+                    startGame(globalCpuBlue, globalCpuRed);
+                }, 50);
+            }
         }
 
         function exitGameUI() {
-            document.getElementById('start-screen').style.display = 'flex'; document.getElementById('crosshair').style.display = 'none';
-            document.getElementById('hud').style.display = 'none'; document.getElementById('score-display').style.display = 'none';
+            document.getElementById('crosshair').style.display = 'none';
+            document.getElementById('hud').style.display = 'none'; 
+            document.getElementById('score-display').style.display = 'none';
             document.getElementById('match-ui').style.display = 'none';
             if (isTouchDevice) { document.getElementById('touch-look-zone').style.display = 'none'; document.getElementById('mobile-controls').style.display = 'none'; resetJoystick(); isShooting = false; isDashing = false;}
             isGameRunning = false;
@@ -892,6 +941,7 @@
             document.getElementById('hp-text').innerText = `HP: ${Math.ceil(playerHp)} / ${playerMaxHp}`;
             const overlay = document.getElementById('damage-overlay'); overlay.style.opacity = '0.6'; setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
+
         function gameOver(customMsg) {
             exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
