@@ -18,20 +18,27 @@
         #score-display { position: absolute; top: 20px; right: 20px; font-size: 32px; color: #fff; font-weight: bold; display: none; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
         
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); }
-        #start-screen h1 { font-size: 64px; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center;}
-        #start-screen p { font-size: 20px; color: #ccc; margin-bottom: 20px; }
+        #start-screen h1 { font-size: 56px; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
+        #start-screen p { font-size: 18px; color: #ccc; margin-bottom: 20px; text-align: center; max-width: 80%; }
+        
         .mode-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
         .mode-btn { padding: 10px 20px; font-size: 18px; background: rgba(255,255,255,0.1); border: 2px solid #555; color: #ccc; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-weight: bold; }
         .mode-btn.active { background: rgba(0,255,204,0.3); border-color: #00ffcc; color: #fff; text-shadow: 0 0 5px #00ffcc; }
         .settings { margin-bottom: 30px; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #333; }
         .settings label { display: block; font-size: 16px; color: #aaa; margin-bottom: 5px; }
         .settings input[type=range] { width: 200px; cursor: pointer; }
+        
         .controls-info { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 14px; }
         #start-btn { padding: 15px 40px; font-size: 24px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,204,0.5); }
         #start-btn:hover { background-color: #fff; box-shadow: 0 0 25px rgba(255,255,255,0.8); transform: scale(1.05); }
         #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; }
         
-        /* モバイルUI */
+        /* チーム戦用マッチUI */
+        #match-ui { position: absolute; top: 15px; width: 100%; text-align: center; pointer-events: none; text-shadow: 0 0 5px #000; z-index: 101; display: none; }
+        #timer { font-size: 44px; color: #fff; font-weight: bold; font-family: monospace; letter-spacing: 2px; }
+        #team-score { font-size: 24px; color: #fff; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
+
+        /* モバイルUI (さらにサイズアップ) */
         #mobile-controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         #touch-look-zone { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; }
         
@@ -54,6 +61,14 @@
         <div id="damage-overlay"></div>
         <div id="crosshair">✛</div>
         
+        <!-- チーム戦用上部マッチUI -->
+        <div id="match-ui">
+            <div id="timer">02:00</div>
+            <div id="team-score">
+                <span style="color: #00bbff; font-weight: bold;">BLUE: 5</span> | <span style="color: #ff3355; font-weight: bold;">RED: 5</span>
+            </div>
+        </div>
+
         <div id="mobile-controls">
             <div id="joystick-zone"><div id="joystick-knob"></div></div>
             <div id="jump-btn">JUMP</div>
@@ -70,13 +85,13 @@
         <div id="score-display">SCORE: <span id="score">0</span></div>
         
         <div id="start-screen">
-            <h1>Multiverse<br>Arsenal</h1>
-            <p>生き残りをかけた次元を超えた戦い</p>
+            <h1>Multiverse<br>5v5 Arena</h1>
+            <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。より多くの生存者を残したチームの勝利！</p>
 
             <div class="mode-select">
-                <button class="mode-btn active" data-mode="score">SCORE MODE</button>
-                <button class="mode-btn" data-mode="cpu">CPU BATTLE</button>
-                <button class="mode-btn" data-mode="online">ONLINE BATTLE</button>
+                <button class="mode-btn active" data-mode="cpu">CPU 5v5 BATTLE</button>
+                <button class="mode-btn" data-mode="online">ONLINE 5v5 BATTLE</button>
+                <button class="mode-btn" data-mode="score">SCORE MODE (SOLO)</button>
             </div>
 
             <div class="settings">
@@ -120,9 +135,14 @@
         let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
         let prevTime = performance.now();
         let score = 0, playerHp = 100, isGameRunning = false;
-        let gameMode = 'score', sensitivity = 1.0;
+        let gameMode = 'cpu', sensitivity = 1.0;
         let velocityY = 0, isGrounded = true;
-        const gravity = 30.0, jumpForce = 14.0; 
+        const gravity = 40.0, jumpForce = 16.0; 
+
+        // 5vs5 用変数
+        let gameTimer = 120; // 2分（秒）
+        let isTimeUp = false;
+        let myTeam = 'blue';
 
         let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
         let previousTouch = { x: 0, y: 0 }, isShooting = false;
@@ -132,7 +152,7 @@
         const WEAPONS = [
             { name: "NEON SHOTGUN", ammo: 8, maxAmmo: 8, damage: 25, pelletCount: 10, spread: 0.15, fireRate: 800, reloadTime: 1500, color: 0x00ffcc, recoilXRot: 0.15, auto: false, length: 40 },
             { name: "PLASMA ASSAULT", ammo: 30, maxAmmo: 30, damage: 20, pelletCount: 1, spread: 0.02, fireRate: 100, reloadTime: 1200, color: 0xff0055, recoilXRot: 0.02, auto: true, length: 60 },
-            { name: "RAILGUN SNIPER", ammo: 3, maxAmmo: 3, damage: 300, pelletCount: 1, spread: 0.0, fireRate: 1200, reloadTime: 2000, color: 0x0055ff, recoilXRot: 0.25, auto: false, length: 500 }
+            { name: "RAILGUN SNIPER", ammo: 3, maxAmmo: 3, damage: 300, pelletCount: 1, spread: 0.0, fireRate: 1200, reloadTime: 2000, color: 0x0055ff, recoilXRot: 0.25, auto: false, length: 500 } // 当たり判定前の正確な射撃ロジックで300ダメージ(ワンパン)
         ];
         let currentWeaponIndex = 0, weaponGroups = [], lastFireTime = 0, isReloading = false;
 
@@ -143,7 +163,7 @@
         
         let collidableMeshes = [];
         let jumpPads = [];
-        let playerCollider; // プレイヤーの当たり判定用（CPU戦・オンライン戦で使用）
+        let playerCollider; // プレイヤーの当たり判定ボックス（Botのエイムターゲット・コライダー用）
 
         const particleGeo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
 
@@ -161,7 +181,7 @@
             ctx.fillStyle = '#ffffff'; ctx.fill(); return new THREE.CanvasTexture(canvas);
         }
 
-        // --- ステージ生成システム ---
+        // --- 凝ったランダムステージシステム (フィールドを100x100に縮小) ---
         function buildStage(type) {
             if (stageGroup) {
                 scene.remove(stageGroup);
@@ -174,6 +194,9 @@
             scene.add(stageGroup);
             collidableMeshes = []; jumpPads = [];
 
+            const mapSize = 100; // 縮小フィールドサイズ
+            const half = mapSize / 2;
+
             let floorColor, fogColor, pillarColor, envParticleColor;
             let hasGrid = false, floorOpacity = 1.0;
             
@@ -182,79 +205,106 @@
                     fogColor = 0x000510; floorColor = 0x050505; pillarColor = 0x111111; envParticleColor = 0x00ffcc; hasGrid = true;
                     ambientLight.intensity = 0.2; dirLight.intensity = 0.3; dirLight.color.setHex(0xffffff);
                     break;
-                case 'ground':
-                    fogColor = 0x87ceeb; floorColor = 0x2d4c1e; pillarColor = 0x8B4513; envParticleColor = 0x90ee90;
-                    ambientLight.intensity = 0.6; dirLight.intensity = 1.0; dirLight.color.setHex(0xffffff);
-                    break;
-                case 'lab':
-                    fogColor = 0xddeeff; floorColor = 0xeeeeee; pillarColor = 0xffffff; envParticleColor = 0xffffff;
-                    ambientLight.intensity = 0.8; dirLight.intensity = 0.8; dirLight.color.setHex(0xddeeff);
-                    break;
                 case 'desert':
                     fogColor = 0xedc9af; floorColor = 0xd2b48c; pillarColor = 0xcd853f; envParticleColor = 0xdaa520;
                     ambientLight.intensity = 0.7; dirLight.intensity = 1.2; dirLight.color.setHex(0xffeedd);
                     break;
+                case 'hell':
+                    fogColor = 0x1a0000; floorColor = 0x110000; pillarColor = 0x220500; envParticleColor = 0xff3300;
+                    ambientLight.intensity = 0.4; dirLight.intensity = 0.6; dirLight.color.setHex(0xff5500);
+                    break;
                 case 'sky':
                     fogColor = 0x87cefa; floorColor = 0xffffff; floorOpacity = 0.6; pillarColor = 0xddddff; envParticleColor = 0xffffff;
                     ambientLight.intensity = 0.8; dirLight.intensity = 1.0; dirLight.color.setHex(0xffffff);
+                    break;
+                default:
+                    fogColor = 0x000510; floorColor = 0x050505; pillarColor = 0x111111; envParticleColor = 0x00ffcc;
+                    ambientLight.intensity = 0.2; dirLight.intensity = 0.3;
                     break;
             }
 
             scene.fog.color.setHex(fogColor);
             renderer.setClearColor(fogColor);
 
-            const pMat = new THREE.MeshStandardMaterial({ color: pillarColor, metalness: (type === 'neon' || type === 'lab') ? 0.9 : 0.1, roughness: type === 'neon' ? 0.2 : 0.8, transparent: type === 'sky', opacity: type === 'sky' ? 0.7 : 1.0 });
+            const pMat = new THREE.MeshStandardMaterial({ color: pillarColor, metalness: (type === 'neon' || type === 'hell') ? 0.9 : 0.1, roughness: type === 'neon' ? 0.2 : 0.8, transparent: type === 'sky', opacity: type === 'sky' ? 0.7 : 1.0 });
             const ironMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.9, roughness: 0.4 });
-            const floorMat = new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.1, metalness: (type === 'neon' || type === 'lab') ? 0.8 : 0.1, transparent: floorOpacity < 1.0, opacity: floorOpacity });
+            const floorMat = new THREE.MeshStandardMaterial({ color: floorColor, roughness: 0.1, metalness: (type === 'neon' || type === 'hell') ? 0.8 : 0.1, transparent: floorOpacity < 1.0, opacity: floorOpacity });
             
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), floorMat);
+            // 床
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(mapSize, mapSize), floorMat);
             floor.rotation.x = -Math.PI / 2; floor.userData.isWall = true;
             stageGroup.add(floor);
             collidableMeshes.push(floor);
 
+            // 外壁境界線
+            const borderWallMat = new THREE.MeshStandardMaterial({ color: pillarColor, roughness: 1.0, metalness: 0.5 });
+            const wallGeoH = new THREE.BoxGeometry(mapSize, 40, 2);
+            const w1 = new THREE.Mesh(wallGeoH, borderWallMat); w1.position.set(0, 20, -half); w1.userData.isWall = true;
+            const w2 = new THREE.Mesh(wallGeoH, borderWallMat); w2.position.set(0, 20, half); w2.userData.isWall = true;
+            const w3 = new THREE.Mesh(wallGeoH, borderWallMat); w3.position.set(-half, 20, 0); w3.rotation.y = Math.PI/2; w3.userData.isWall = true;
+            const w4 = new THREE.Mesh(wallGeoH, borderWallMat); w4.position.set(half, 20, 0); w4.rotation.y = Math.PI/2; w4.userData.isWall = true;
+            stageGroup.add(w1, w2, w3, w4);
+            collidableMeshes.push(w1, w2, w3, w4);
+
             if (hasGrid) {
-                stageGroup.add(new THREE.GridHelper(300, 150, 0xff0055, 0x003322).translateY(0.01));
-                stageGroup.add(new THREE.GridHelper(300, 150, 0x00ffcc, 0x003322).translateY(40));
+                stageGroup.add(new THREE.GridHelper(mapSize, 50, 0xff0055, 0x003322).translateY(0.01));
             }
 
             let edgeMat = null;
             if (type === 'neon') edgeMat = new THREE.LineBasicMaterial({ color: 0x00ffcc });
 
-            const numBuildings = 5 + Math.floor(Math.random() * 4);
-            for (let i = 0; i < numBuildings; i++) createRandomBuilding((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 200, pMat, edgeMat);
+            // テーマ毎のアリーナ構造物・障害物設計
+            const numBuildings = 3 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < numBuildings; i++) {
+                const bx = (Math.random() - 0.5) * (mapSize - 40);
+                const bz = (Math.random() - 0.5) * (mapSize - 40);
+                createRandomBuilding(bx, bz, pMat, edgeMat);
+            }
 
-            for(let i=0; i<40; i++) {
+            // 特殊オブジェクト(鉄壁、溶岩溜まり、サボテン、ジャンプパッド)の散布
+            for(let i=0; i<25; i++) {
                 const rand = Math.random();
                 let mesh;
-                if (rand < 0.2) {
-                    mesh = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.5, 16), new THREE.MeshStandardMaterial({color:0x00ff00, emissive:0x00ff00, emissiveIntensity:0.5}));
+                if (rand < 0.15) {
+                    // ジャンプパッド（緑に妖しく発光）
+                    mesh = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 0.4, 16), new THREE.MeshStandardMaterial({color:0x00ff55, emissive:0x00ff33, emissiveIntensity:1.0}));
+                    mesh.userData.isJumpPad = true;
                     jumpPads.push(mesh);
-                } else if (rand < 0.5) {
-                    mesh = new THREE.Mesh(new THREE.BoxGeometry(10 + Math.random()*10, 10 + Math.random()*10, 2), ironMat);
+                } else if (rand < 0.45) {
+                    // 鉄の防壁
+                    mesh = new THREE.Mesh(new THREE.BoxGeometry(8 + Math.random()*6, 8 + Math.random()*8, 2), ironMat);
                     mesh.rotation.y = Math.random() * Math.PI;
+                    mesh.userData.isWall = true;
                     collidableMeshes.push(mesh);
                 } else {
-                    const w = 4 + Math.random() * 6, h = 4 + Math.random() * 20, d = 4 + Math.random() * 6;
-                    mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), pMat);
-                    if (type === 'ground' && Math.random() > 0.5) {
-                        const leaf = new THREE.Mesh(new THREE.BoxGeometry(w*2, w*2, d*2), new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.9 }));
-                        leaf.position.y = h/2; mesh.add(leaf);
-                    } else if (type === 'neon' && edgeMat) {
-                        mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat));
+                    // テーマ別オブジェクト
+                    if (type === 'desert') {
+                        // 砂漠のサボテン
+                        mesh = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 6+Math.random()*6, 8), new THREE.MeshStandardMaterial({color: 0x3d7a3d, roughness: 0.9}));
+                    } else if (type === 'hell') {
+                        // 黒曜石の角柱
+                        mesh = new THREE.Mesh(new THREE.ConeGeometry(2, 10+Math.random()*10, 4), new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.2, metalness: 0.9}));
+                    } else {
+                        // ネオンボックス
+                        const w = 4 + Math.random() * 4, h = 4 + Math.random() * 12;
+                        mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), pMat);
+                        if (edgeMat) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat));
                     }
-                    mesh.position.y = h/2;
+                    mesh.position.y = (mesh.geometry.parameters.height || mesh.geometry.parameters.height === undefined ? 5 : mesh.geometry.parameters.height / 2);
+                    mesh.userData.isWall = true;
                     collidableMeshes.push(mesh);
                 }
 
                 let px, pz;
-                do { px = (Math.random() - 0.5) * 250; pz = (Math.random() - 0.5) * 250; } while (Math.abs(px) < 20 && Math.abs(pz) < 20);
-                mesh.position.set(px, mesh.position.y || 0.25, pz);
+                do { px = (Math.random() - 0.5) * (mapSize - 15); pz = (Math.random() - 0.5) * (mapSize - 15); } while (Math.abs(px) < 15 && Math.abs(pz) < 15);
+                mesh.position.set(px, mesh.position.y || 0.2, pz);
                 stageGroup.add(mesh);
             }
 
+            // 環境光塵
             const envGeo = new THREE.BufferGeometry();
-            const posArray = new Float32Array(2000 * 3);
-            for(let i=0; i<2000 * 3; i++) posArray[i] = (Math.random() - 0.5) * 300;
+            const posArray = new Float32Array(1000 * 3);
+            for(let i=0; i<1000 * 3; i++) posArray[i] = (Math.random() - 0.5) * mapSize;
             envGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
             envPoints = new THREE.Points(envGeo, new THREE.PointsMaterial({ size: type==='sky'? 1.0 : 0.2, color: envParticleColor, transparent: true, opacity: 0.5 }));
             if(type === 'sky' || type === 'ground') envPoints.material.map = createCircleTexture();
@@ -263,12 +313,15 @@
 
         function createRandomBuilding(px, pz, mat, edgeMat) {
             const group = new THREE.Group(); group.position.set(px, 0, pz);
-            const w = 20 + Math.random() * 20, d = 20 + Math.random() * 20;
+            const w = 15 + Math.random() * 10, d = 15 + Math.random() * 10;
             
-            const f2 = new THREE.Mesh(new THREE.BoxGeometry(w, 1, d), mat); f2.position.set(0, 10, 0);
+            // 2階の床面
+            const f2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.8, d), mat); f2.position.set(0, 10, 0);
+            f2.userData.isWall = true;
             group.add(f2); collidableMeshes.push(f2);
             
-            const wallH = 10, wallThick = 1;
+            // 壁面の構築 (一部屋形状。入り口も切り抜く)
+            const wallH = 10, wallThick = 0.8;
             const walls = [
                 { geo: new THREE.BoxGeometry(w, wallH, wallThick), pos: [0, 5, -d/2] },
                 { geo: new THREE.BoxGeometry(w, wallH, wallThick), pos: [0, 5, d/2] },
@@ -276,33 +329,35 @@
                 { geo: new THREE.BoxGeometry(wallThick, wallH, d), pos: [w/2, 5, 0] }
             ];
             walls.forEach(wd => {
-                if(Math.random() > 0.3) {
-                    if (Math.random() > 0.5) {
-                        const m1 = new THREE.Mesh(wd.geo.clone().scale(0.4, 1, 1), mat);
-                        const m2 = new THREE.Mesh(wd.geo.clone().scale(0.4, 1, 1), mat);
+                if(Math.random() > 0.25) {
+                    if (Math.random() > 0.4) {
+                        const m1 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat);
+                        const m2 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat);
                         if(wd.geo.parameters.width > wd.geo.parameters.depth) {
                             m1.position.set(wd.pos[0] - w*0.3, wd.pos[1], wd.pos[2]); m2.position.set(wd.pos[0] + w*0.3, wd.pos[1], wd.pos[2]);
                         } else {
                             m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3);
                         }
+                        m1.userData.isWall = true; m2.userData.isWall = true;
                         group.add(m1, m2); collidableMeshes.push(m1, m2);
                     } else {
-                        const m = new THREE.Mesh(wd.geo, mat); m.position.set(...wd.pos);
+                        const m = new THREE.Mesh(wd.geo, mat); m.position.set(...wd.pos); m.userData.isWall = true;
                         group.add(m); collidableMeshes.push(m);
                     }
                 }
             });
 
-            for(let i=0; i<3; i++) {
-                if(Math.random() > 0.5) {
-                    const pillar = new THREE.Mesh(new THREE.BoxGeometry(2, 10, 2), mat);
-                    pillar.position.set((Math.random()-0.5)*w*0.8, 5, (Math.random()-0.5)*d*0.8);
-                    group.add(pillar); collidableMeshes.push(pillar);
-                }
+            // 内部の柱
+            if(Math.random() > 0.5) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 10, 1.5), mat);
+                pillar.position.set((Math.random()-0.5)*w*0.6, 5, (Math.random()-0.5)*d*0.6);
+                pillar.userData.isWall = true;
+                group.add(pillar); collidableMeshes.push(pillar);
             }
 
+            // スムーズ階段（スロープ判定を結合して歩いて登れる）
             const stairDir = Math.floor(Math.random()*4);
-            const stairW = 6, stairL = 15;
+            const stairW = 5, stairL = 12;
             const stairsGroup = new THREE.Group();
             
             for(let i=0; i<10; i++) {
@@ -315,6 +370,7 @@
             const slopeCollider = new THREE.Mesh(new THREE.BoxGeometry(stairW, 1, slopeLen), new THREE.MeshBasicMaterial({visible:false}));
             slopeCollider.rotation.x = Math.atan2(10, stairL);
             slopeCollider.position.set(0, 5, 0);
+            slopeCollider.userData.isWall = true;
             collidableMeshes.push(slopeCollider);
             stairsGroup.add(slopeCollider);
 
@@ -326,7 +382,7 @@
             group.add(stairsGroup);
 
             if (edgeMat) { group.children.forEach(c => { if(c.geometry && c !== stairsGroup) c.add(new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry), edgeMat)); }); }
-            if (Math.abs(px) < 30 && Math.abs(pz) < 30) group.position.x += 60;
+            if (Math.abs(px) < 20 && Math.abs(pz) < 20) group.position.x += 40; // 初期スポーン付近への被りを防止
             stageGroup.add(group);
         }
 
@@ -349,8 +405,8 @@
             muzzleLight = new THREE.PointLight(0xffaa00, 0, 10); muzzleLight.position.set(0.3, -0.2, -1.5); camera.add(muzzleLight);
             weaponLight = new THREE.PointLight(0xffffff, 1.2, 5); weaponLight.position.set(0.5, 0.5, 0.5); camera.add(weaponLight);
 
-            // プレイヤーコライダー（当たり判定）
-            playerCollider = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial({visible:false}));
+            // プレイヤーコライダー（Botの攻撃当たり判定用）
+            playerCollider = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2, 1.2), new THREE.MeshBasicMaterial({visible:false}));
             playerCollider.userData.isPlayer = true;
             scene.add(playerCollider);
 
@@ -381,7 +437,7 @@
             const sensSlider = document.getElementById('sensitivity-slider');
             sensSlider.addEventListener('input', (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); });
             document.getElementById('start-btn').addEventListener('click', () => {
-                if (gameMode === 'online' && !currentUser) { alert("サーバーに接続中です。"); return; }
+                if (gameMode === 'online' && !currentUser) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
                 if (isTouchDevice) enterGameUI();
                 else { try { document.body.requestPointerLock(); } catch(e) { enterGameUI(); } }
             });
@@ -391,12 +447,12 @@
             const startScreen = document.getElementById('start-screen');
             startScreen.style.display = 'flex';
             startScreen.innerHTML = `
-                <h1>Multiverse<br>Arsenal</h1>
-                <p>生き残りをかけた次元を超えた戦い</p>
+                <h1>Multiverse<br>5v5 Arena</h1>
+                <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。より多くの生存者を残したチームの勝利！</p>
                 <div class="mode-select">
-                    <button class="mode-btn ${gameMode==='score'?'active':''}" data-mode="score">SCORE MODE</button>
-                    <button class="mode-btn ${gameMode==='cpu'?'active':''}" data-mode="cpu">CPU BATTLE</button>
-                    <button class="mode-btn ${gameMode==='online'?'active':''}" data-mode="online">ONLINE BATTLE</button>
+                    <button class="mode-btn ${gameMode==='cpu'?'active':''}" data-mode="cpu">CPU 5v5 BATTLE</button>
+                    <button class="mode-btn ${gameMode==='online'?'active':''}" data-mode="online">ONLINE 5v5 BATTLE</button>
+                    <button class="mode-btn ${gameMode==='score'?'active':''}" data-mode="score">SCORE MODE (SOLO)</button>
                 </div>
                 <div class="settings"><label>SENSITIVITY (視点感度): <span id="sens-val">${sensitivity.toFixed(1)}</span></label><input type="range" id="sensitivity-slider" min="0.1" max="3.0" step="0.1" value="${sensitivity}"></div>
                 <div class="controls-info" id="controls-text">
@@ -427,7 +483,7 @@
             sgGroup.add(b1, b2, rec, pump, grip, sight);
             weaponGroups.push(sgGroup);
 
-            // 2. アサルト
+            // 2. アサルトライフル
             const rfGroup = new THREE.Group();
             const rfHl = new THREE.MeshBasicMaterial({ color: WEAPONS[1].color });
             const rfBody = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 0.6), darkMat); rfBody.position.set(0, 0, -0.15);
@@ -468,12 +524,13 @@
         function exitGameUI() {
             document.getElementById('start-screen').style.display = 'flex'; document.getElementById('crosshair').style.display = 'none';
             document.getElementById('hud').style.display = 'none'; document.getElementById('score-display').style.display = 'none';
+            document.getElementById('match-ui').style.display = 'none';
             if (isTouchDevice) { document.getElementById('touch-look-zone').style.display = 'none'; document.getElementById('mobile-controls').style.display = 'none'; resetJoystick(); isShooting = false; }
             isGameRunning = false;
         }
 
         function startGame() {
-            isGameRunning = true; score = 0; playerHp = 100;
+            isGameRunning = true; score = 0; playerHp = 100; gameTimer = 120; isTimeUp = false;
             WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false;
             document.getElementById('score').innerText = score;
             document.getElementById('hp-fill').style.width = '100%'; document.getElementById('hp-fill').style.backgroundColor = '#00ff88';
@@ -486,22 +543,39 @@
             if (unsubscribePlayers) { unsubscribePlayers(); unsubscribePlayers = null; }
             if (unsubscribeMe) { unsubscribeMe(); unsubscribeMe = null; }
 
-            const STAGE_TYPES = ['neon', 'ground', 'lab', 'desert', 'sky'];
+            // 凝ったアリーナ（砂漠、地獄、ネオンからランダム）
+            const STAGE_TYPES = ['desert', 'hell', 'neon'];
             buildStage(STAGE_TYPES[Math.floor(Math.random() * STAGE_TYPES.length)]);
 
-            camera.position.set(0, 20, 0); 
-            euler.set(0,0,0); camera.quaternion.setFromEuler(euler);
-            
-            if (gameMode === 'online') {
-                startOnlineSync(); startMySync();
-                if (db && currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { x: 0, y: 20, z: 0, ry: 0, hp: 100, isDead: false, timestamp: serverTimestamp() });
-            } else if (gameMode === 'cpu') {
-                // CPU バトルロイヤル（プレイヤーを含めて50人）
-                for(let i=0; i<49; i++) spawnBot();
-                document.getElementById('score').innerText = `ALIVE: 50`;
+            // チーム分けに応じたスポーン位置
+            if (gameMode === 'cpu' || gameMode === 'online') {
+                document.getElementById('match-ui').style.display = 'block';
+                document.getElementById('score-display').style.display = 'none';
+            } else {
+                document.getElementById('match-ui').style.display = 'none';
+                document.getElementById('score-display').style.display = 'block';
             }
+
+            if (gameMode === 'online') {
+                myTeam = Math.random() > 0.5 ? 'blue' : 'red';
+                camera.position.set(0, 10, myTeam === 'blue' ? 40 : -40);
+                startOnlineSync(); startMySync();
+                if (db && currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { x: camera.position.x, y: camera.position.y, z: camera.position.z, ry: 0, hp: 100, isDead: false, team: myTeam, timestamp: serverTimestamp() });
+            } else if (gameMode === 'cpu') {
+                myTeam = 'blue';
+                camera.position.set(0, 10, 40); // ブルーチームは手前スポーン
+                // 自分を除いたブルー味方4人、レッド敵5人をスポーン
+                for(let i=0; i<4; i++) spawnBot('blue', (Math.random()-0.5)*30, 30 + Math.random()*10);
+                for(let i=0; i<5; i++) spawnBot('red', (Math.random()-0.5)*30, -30 - Math.random()*10);
+            } else {
+                // SOLO SCORE MODE
+                camera.position.set(0, 20, 0);
+            }
+            
+            euler.set(0,0,0); camera.quaternion.setFromEuler(euler);
         }
 
+        // --- オンライン通信 ---
         let lastSyncTime = 0;
         function syncPlayer() {
             if (!currentUser || !db || gameMode !== 'online') return;
@@ -521,11 +595,12 @@
                     if (uid === currentUser.uid) return;
                     if (change.type === 'added' || change.type === 'modified') {
                         if (!otherPlayers[uid]) {
-                            const avatar = createPlayerAvatar(0x0055ff); scene.add(avatar.group);
-                            otherPlayers[uid] = { ...avatar, targetPos: new THREE.Vector3(data.x, data.y, data.z), targetRy: data.ry, hp: 100, isDead: false };
+                            const avatarColor = data.team === 'blue' ? 0x00bbff : 0xff3355;
+                            const avatar = createPlayerAvatar(avatarColor); scene.add(avatar.group);
+                            otherPlayers[uid] = { ...avatar, targetPos: new THREE.Vector3(data.x, data.y, data.z), targetRy: data.ry, hp: data.hp, isDead: data.isDead, team: data.team };
                         }
                         const p = otherPlayers[uid]; p.targetPos.set(data.x, data.y, data.z); p.targetRy = data.ry; p.hp = data.hp; p.isDead = data.isDead; p.group.visible = !data.isDead;
-                        if (data.isDead && change.type === 'modified') createParticles(p.group.position, 0x0055ff, 20, 3.0);
+                        if (data.isDead && change.type === 'modified') createParticles(p.group.position, p.team === 'blue' ? 0x00bbff : 0xff3355, 20, 3.0);
                     }
                     if (change.type === 'removed' && otherPlayers[uid]) { scene.remove(otherPlayers[uid].group); delete otherPlayers[uid]; }
                 });
@@ -549,17 +624,19 @@
             group.add(body, head, visor); return { group, body, head };
         }
 
+        // --- ボットAIクラス (5v5チーム索敵・チーム同士の射撃サポート) ---
         class Bot {
-            constructor(x, z) {
-                const avatar = createPlayerAvatar(0xff0000); this.group = avatar.group; this.body = avatar.body; this.head = avatar.head;
-                this.group.position.set(x, 30, z); scene.add(this.group);
-                this.hp = 100; this.isDead = false; this.lastFireTime = performance.now(); this.fireInterval = 800 + Math.random() * 1500;
+            constructor(x, z, team) {
+                const colorHex = team === 'blue' ? 0x00bbff : 0xff3355;
+                const avatar = createPlayerAvatar(colorHex); this.group = avatar.group; this.body = avatar.body; this.head = avatar.head;
+                this.group.position.set(x, 15, z); scene.add(this.group);
+                this.hp = 100; this.isDead = false; this.team = team; this.lastFireTime = performance.now(); this.fireInterval = 800 + Math.random() * 1200;
                 this.velocityY = 0;
             }
             update(delta) {
                 if (this.isDead) return;
                 
-                // 重力と床判定
+                // 重力と足元判定
                 this.velocityY -= gravity * delta;
                 let nextY = this.group.position.y + this.velocityY * delta;
                 const botOrigin = this.group.position.clone(); botOrigin.y += 1.0;
@@ -576,29 +653,36 @@
                     if (this.group.position.distanceTo(pad.position) < 3 && this.group.position.y - pad.position.y < 1.0) { this.velocityY = 40; }
                 });
 
-                // ターゲット検索 (プレイヤー or 他のBot)
+                // 一番近くにいる「敵チーム」を索敵
                 let closestTarget = null; let minDist = Infinity;
-                if (playerHp > 0) {
+                if (playerHp > 0 && this.team !== myTeam) {
                     const d = this.group.position.distanceTo(camera.position);
                     if (d < minDist) { minDist = d; closestTarget = camera.position; }
                 }
                 bots.forEach(b => {
-                    if (b !== this && !b.isDead) {
+                    if (b !== this && !b.isDead && b.team !== this.team) {
                         const d = this.group.position.distanceTo(b.group.position);
                         if (d < minDist) { minDist = d; closestTarget = b.group.position.clone(); closestTarget.y += 1.0; }
                     }
                 });
+                for(let uid in otherPlayers) {
+                    const op = otherPlayers[uid];
+                    if(!op.isDead && op.team !== this.team) {
+                        const d = this.group.position.distanceTo(op.group.position);
+                        if(d < minDist) { minDist = d; closestTarget = op.group.position.clone(); closestTarget.y += 1.0; }
+                    }
+                }
 
                 if (closestTarget) {
                     const dir = new THREE.Vector3().subVectors(closestTarget, this.group.position); dir.y = 0; dir.normalize();
                     this.group.lookAt(closestTarget.x, this.group.position.y, closestTarget.z);
                     
-                    if (minDist > 15) this.group.position.add(dir.multiplyScalar(5.0 * delta));
-                    else if (minDist < 5) this.group.position.add(dir.multiplyScalar(-3.0 * delta));
-                    else this.group.position.add(new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(3.0 * delta * Math.sin(performance.now()*0.002)));
+                    if (minDist > 12) this.group.position.add(dir.multiplyScalar(6.0 * delta));
+                    else if (minDist < 4) this.group.position.add(dir.multiplyScalar(-3.0 * delta));
+                    else this.group.position.add(new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(4.0 * delta * Math.sin(performance.now()*0.002)));
 
-                    // 射撃（コライダー判定含む）
-                    if (performance.now() - this.lastFireTime > this.fireInterval && minDist < 40) {
+                    // 射撃（コライダー判定含む壁貫通防止）
+                    if (performance.now() - this.lastFireTime > this.fireInterval && minDist < 35) {
                         this.lastFireTime = performance.now(); 
                         const startPos = this.group.position.clone(); startPos.y += 1.0;
                         const aimDir = new THREE.Vector3().subVectors(closestTarget, startPos).normalize();
@@ -606,11 +690,12 @@
                         raycaster.set(startPos, aimDir);
                         const botTargets = [];
                         bots.forEach(b => { if(b !== this && !b.isDead) botTargets.push(b.body, b.head); });
-                        const allObj = collidableMeshes.concat(botTargets);
-                        if(playerHp > 0) allObj.push(playerCollider); // プレイヤーの当たり判定
+                        if(playerHp > 0) botTargets.push(playerCollider);
+                        for(let uid in otherPlayers) { if(!otherPlayers[uid].isDead) botTargets.push(otherPlayers[uid].body, otherPlayers[uid].head); }
                         
+                        const allObj = collidableMeshes.concat(botTargets);
                         const hits = raycaster.intersectObjects(allObj);
-                        let drawLength = 40;
+                        let drawLength = 35;
                         
                         if (hits.length > 0) {
                             drawLength = hits[0].distance;
@@ -618,21 +703,30 @@
                             
                             if (!collidableMeshes.includes(hitObj)) {
                                 if (hitObj.userData.isPlayer) {
-                                    if(Math.random() > 0.4) damagePlayer(15);
+                                    if(Math.random() > 0.45) damagePlayer(10); // プレイヤーへのダメージ
                                 } else {
+                                    // 他のBotやオンラインプレイヤー
                                     const hitBot = bots.find(b => b.body === hitObj || b.head === hitObj);
                                     if (hitBot) hitBot.takeDamage(15);
+                                    
+                                    for (let uid in otherPlayers) {
+                                        if (otherPlayers[uid].body === hitObj || otherPlayers[uid].head === hitObj) {
+                                            const newHp = Math.max(0, otherPlayers[uid].hp - 15);
+                                            if (db) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', uid), { hp: newHp }).catch(()=>{});
+                                            break;
+                                        }
+                                    }
                                 }
                             }
                         }
-                        createTrail(startPos, aimDir, 0xff0000, drawLength);
+                        createTrail(startPos, aimDir, this.team === 'blue' ? 0x00bbff : 0xff3355, drawLength);
                     }
                 }
             }
-            die() { if (this.isDead) return; this.isDead = true; scene.remove(this.group); createParticles(this.group.position, 0xff0000, 30, 3.0); score += 200; document.getElementById('score').innerText = score; }
+            die() { if (this.isDead) return; this.isDead = true; scene.remove(this.group); createParticles(this.group.position, this.team === 'blue' ? 0x00bbff : 0xff3355, 30, 3.0); }
             takeDamage(amount) { this.hp -= amount; if (this.hp <= 0 && !this.isDead) this.die(); }
         }
-        function spawnBot() { const angle = Math.random() * Math.PI * 2, dist = 20 + Math.random() * 80; bots.push(new Bot(camera.position.x + Math.cos(angle)*dist, camera.position.z + Math.sin(angle)*dist)); }
+        function spawnBot(team, x, z) { bots.push(new Bot(x, z, team)); }
 
         class Enemy {
             constructor(x, z) {
@@ -647,7 +741,6 @@
             update(delta, targetPos) {
                 if (this.isDead) return;
                 
-                // 重力と床判定
                 this.velocityY -= gravity * delta;
                 let nextY = this.group.position.y + this.velocityY * delta;
                 const enemyOrigin = this.group.position.clone(); enemyOrigin.y += 1.0;
@@ -656,7 +749,6 @@
                 let groundHeight = 0;
                 for(let i=0; i<interY.length; i++){ if(interY[i].face && interY[i].face.normal.y > 0.5){ groundHeight = interY[i].point.y; break; } }
                 
-                // 地面にめり込まないように 0.8 の高さを維持
                 if (interY.length > 0 && nextY <= groundHeight + 0.8) {
                     this.group.position.y = groundHeight + 0.8; this.velocityY = 0;
                 } else { this.group.position.y = nextY; }
@@ -665,18 +757,7 @@
                     if (this.group.position.distanceTo(pad.position) < 3 && Math.abs(this.group.position.y - pad.position.y) < 2.0) { this.velocityY = 40; }
                 });
 
-                // 平行移動のみでプレイヤーを追う（Y軸は変えない）
                 const dir = new THREE.Vector3().subVectors(targetPos, this.group.position); dir.y = 0; dir.normalize();
-                
-                // 簡易的な壁回避
-                const checkOrigin = this.group.position.clone(); checkOrigin.y += 0.5;
-                raycaster.set(checkOrigin, dir);
-                const interWall = raycaster.intersectObjects(collidableMeshes);
-                if (interWall.length > 0 && interWall[0].distance < 1.0 && Math.abs(interWall[0].face.normal.y) < 0.5) {
-                    // 壁にぶつかったら滑るように
-                    dir.add(interWall[0].face.normal.clone().multiplyScalar(0.8)).normalize();
-                }
-                
                 this.group.position.add(dir.multiplyScalar(this.speed * delta)); 
                 this.body.rotation.y += delta; this.body.rotation.x += delta * 0.5; this.core.scale.setScalar(1 + Math.sin(performance.now() * 0.01) * 0.1);
             }
@@ -688,26 +769,27 @@
             takeDamage(amount) { this.hp -= amount; this.core.material.color.setHex(0xffffff); setTimeout(() => { if(this.core) this.core.material.color.setHex(0xffaaaa); }, 50); if (this.hp <= 0 && !this.isDead) this.die(); }
         }
 
+        // --- ダメージ・ゲームオーバー ---
         function damagePlayer(amount = 20) { playerHp -= amount; updatePlayerHpUI(); if (playerHp <= 0) gameOver(); }
         function updatePlayerHpUI() {
             const hpFill = document.getElementById('hp-fill'); hpFill.style.width = Math.max(0, playerHp) + '%';
             if (playerHp > 50) hpFill.style.backgroundColor = '#00ff88'; else if (playerHp > 20) hpFill.style.backgroundColor = '#ffaa00'; else hpFill.style.backgroundColor = '#ff0000';
             const overlay = document.getElementById('damage-overlay'); overlay.style.opacity = '0.6'; setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
-        function gameOver() {
+        function gameOver(customMsg) {
             isGameRunning = false; if (document.exitPointerLock) document.exitPointerLock(); else exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
+            
+            document.getElementById('match-ui').style.display = 'none';
             const startScreen = document.getElementById('start-screen'); startScreen.style.display = 'flex';
             
-            let resultText = `SCORE/KILLS: ${score}`;
-            if (gameMode === 'cpu') {
-                resultText = `RANK: ${bots.length + 1} / 50`;
-            }
+            let resultText = customMsg || `SCORE/KILLS: ${score}`;
+            let mainTitle = customMsg ? "MATCH ENDED" : "YOU DIED";
 
             startScreen.innerHTML = `
-                <h1 style="color:#ff0055; text-shadow:0 0 20px #ff0055;">YOU DIED</h1>
-                <p style="font-size:32px;">${resultText}</p>
-                <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+                <h1 style="color:#ff0055; text-shadow:0 0 20px #ff0055;">${mainTitle}</h1>
+                <p style="font-size:28px;">${resultText}</p>
+                <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:20px;">
                     <button id="restart-btn" style="padding: 15px 30px; font-size: 20px; background-color: #ff0055; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">RESPAWN</button>
                     <button id="menu-btn" style="padding: 15px 30px; font-size: 20px; background-color: #555; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">MENU</button>
                 </div>
@@ -720,7 +802,7 @@
             });
         }
 
-        // --- 射撃システム（壁貫通防止・スナイパー照準修正） ---
+        // --- 射撃システム（ビームを太い弾道として視覚化、壁貫通を厳密に防止） ---
         const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
@@ -738,7 +820,7 @@
             const allTargets = targetBodies.concat(collidableMeshes);
             const muzzlePos = new THREE.Vector3(0, 0.05, -0.8).applyMatrix4(activeGroup.matrixWorld); 
 
-            // リコイル適用前にレイキャスト計算を先に行う（照準ブレ修正）
+            // スナイパー等が照準のブレ(リコイル)の影響を受ける前に、クロスヘアの中心へのレイキャストを先行処理
             for (let i = 0; i < weapon.pelletCount; i++) {
                 const dir = new THREE.Vector3(0, 0, -1); dir.x += (Math.random() - 0.5) * weapon.spread; dir.y += (Math.random() - 0.5) * weapon.spread; dir.normalize().applyQuaternion(camera.quaternion);
                 
@@ -766,10 +848,11 @@
                         }
                     }
                 }
+                // 太くて光る弾道シリンダーを生成
                 createTrail(muzzlePos, dir, weapon.color, drawLength);
             }
 
-            // 弾道計算の後にリコイル処理
+            // 弾道生成後に武器アニメーション/視点ブレ(リコイル)を適用
             activeGroup.position.z += 0.2; if (weapon.name === "NEON SHOTGUN" && activeGroup.getObjectByName("pump")) activeGroup.getObjectByName("pump").position.z += 0.1;
             setTimeout(() => { let restoreCount = 0; const anim = setInterval(() => { activeGroup.position.z -= 0.2 / 10; if (weapon.name === "NEON SHOTGUN" && activeGroup.getObjectByName("pump")) activeGroup.getObjectByName("pump").position.z -= 0.1 / 10; restoreCount++; if (restoreCount >= 10) clearInterval(anim); }, 20); }, weapon.fireRate * 0.2);
 
@@ -778,15 +861,16 @@
             createParticles(muzzlePos, weapon.color, 10, 5.0);
         }
 
+        // 光るシリンダー状の太い弾道（トレーサー）
         function createTrail(startPos, direction, color, length = 40) {
-            const geo = new THREE.CylinderGeometry(0.05, 0.05, length, 8);
+            const geo = new THREE.CylinderGeometry(0.06, 0.06, length, 8);
             geo.translate(0, length / 2, 0); geo.rotateX(Math.PI / 2);
             const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.copy(startPos);
             mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
             scene.add(mesh);
-            trails.push({ mesh: mesh, life: 0.1, maxLife: 0.1 });
+            trails.push({ mesh: mesh, life: 0.12, maxLife: 0.12 });
         }
         function updateTrails(delta) {
             for (let i = trails.length - 1; i >= 0; i--) {
@@ -861,7 +945,7 @@
         function animate() {
             requestAnimationFrame(animate); const time = performance.now(), delta = Math.min((time - prevTime) / 1000, 0.1); prevTime = time;
 
-            // プレイヤーコライダーの更新
+            // コライダーボックスの連動更新
             if (playerCollider) {
                 playerCollider.position.copy(camera.position);
                 playerCollider.position.y -= 0.6;
@@ -870,7 +954,7 @@
             if (isGameRunning) {
                 if (isShooting && WEAPONS[currentWeaponIndex].auto) attemptShoot();
 
-                // --- 移動と当たり判定（AABB） ---
+                // --- 移動・壁当たり判定 ---
                 velocity.x -= velocity.x * 10.0 * delta; velocity.z -= velocity.z * 10.0 * delta;
                 direction.z = Math.max(-1, Math.min(1, (Number(moveForward) - Number(moveBackward)) + joystickVector.y));
                 direction.x = Math.max(-1, Math.min(1, (Number(moveRight) - Number(moveLeft)) + joystickVector.x));
@@ -883,7 +967,7 @@
 
                 const moveVec = new THREE.Vector3(); moveVec.add(camDir.multiplyScalar(-velocity.z * delta)); moveVec.add(camRight.multiplyScalar(-velocity.x * delta));
                 
-                // 水平方向の壁当たり判定
+                // 水平方向衝突判定
                 const checkOrigin = camera.position.clone(); checkOrigin.y -= 0.6;
                 if (Math.abs(moveVec.x) > 0.001) { 
                     raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); 
@@ -896,10 +980,11 @@
                     if (interZ.length > 0 && interZ[0].distance < 0.6 && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; 
                 }
 
-                camera.position.x += moveVec.x; camera.position.x = Math.max(-145, Math.min(145, camera.position.x)); 
-                camera.position.z += moveVec.z; camera.position.z = Math.max(-145, Math.min(145, camera.position.z));
+                // 100x100アリーナ境界に制限
+                camera.position.x += moveVec.x; camera.position.x = Math.max(-48, Math.min(48, camera.position.x)); 
+                camera.position.z += moveVec.z; camera.position.z = Math.max(-48, Math.min(48, camera.position.z));
 
-                // 垂直方向の移動と床当たり判定・ジャンプパッド判定
+                // 垂直運動（重力・床判定）
                 velocityY -= gravity * delta; 
                 let nextY = camera.position.y + velocityY * delta;
                 
@@ -912,7 +997,7 @@
 
                 if (nextY <= groundHeight + 1.6) { camera.position.y = groundHeight + 1.6; velocityY = 0; isGrounded = true; } else { camera.position.y = nextY; isGrounded = false; }
 
-                // ジャンプパッドに乗ったか
+                // ジャンプパッド判定
                 jumpPads.forEach(pad => {
                     if (camera.position.distanceTo(pad.position) < 3 && camera.position.y - pad.position.y < 3.0) { velocityY = 40; isGrounded = false; }
                 });
@@ -922,23 +1007,50 @@
                     activeGroup.position.y = -0.25 + Math.sin(time * 0.01) * 0.02; activeGroup.position.x = 0.25 + Math.cos(time * 0.005) * 0.01;
                 } else if (!isReloading) { activeGroup.position.y += (-0.25 - activeGroup.position.y) * 0.1; activeGroup.position.x += (0.25 - activeGroup.position.x) * 0.1; }
 
+                // --- ゲームモード別ループ処理 ---
                 if (gameMode === 'score') {
                     spawnTimer += delta;
-                    if (spawnTimer > 1.5) { spawnTimer = 0; const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 20; const sx = camera.position.x + Math.cos(a)*d, sz = camera.position.z + Math.sin(a)*d; if (sx > -145 && sx < 145 && sz > -145 && sz < 145) enemies.push(new Enemy(sx, sz)); }
+                    if (spawnTimer > 1.5) { spawnTimer = 0; const a = Math.random() * Math.PI * 2, d = 25 + Math.random() * 15; const sx = camera.position.x + Math.cos(a)*d, sz = camera.position.z + Math.sin(a)*d; if (sx > -48 && sx < 48 && sz > -48 && sz < 48) enemies.push(new Enemy(sx, sz)); }
                     for (let i = enemies.length - 1; i >= 0; i--) { let e = enemies[i]; e.update(delta, camera.position); if (!e.isDead && e.group.position.distanceTo(camera.position) < 2.0) { damagePlayer(); e.die(); } if (e.isDead && !scene.children.includes(e.group)) enemies.splice(i, 1); }
-                } else if (gameMode === 'cpu') {
-                    for (let i = bots.length - 1; i >= 0; i--) { let b = bots[i]; b.update(delta, camera.position); if (b.isDead && !scene.children.includes(b.group)) bots.splice(i, 1); }
-                    
-                    document.getElementById('score').innerText = `ALIVE: ${bots.length + (playerHp > 0 ? 1 : 0)}`;
-                    if (bots.length === 0 && playerHp > 0) {
-                        document.getElementById('score').innerText = "VICTORY!";
-                        document.getElementById('score').style.color = "#00ffcc";
-                    } else {
-                        document.getElementById('score').style.color = "#fff";
+                } else if (gameMode === 'cpu' || gameMode === 'online') {
+                    // タイマー進行
+                    gameTimer -= delta;
+                    let m = Math.floor(Math.max(0, gameTimer) / 60);
+                    let s = Math.floor(Math.max(0, gameTimer) % 60).toString().padStart(2, '0');
+                    document.getElementById('timer').innerText = `${m}:${s}`;
+
+                    // 生存数の集計
+                    let blueAlive = playerHp > 0 && myTeam === 'blue' ? 1 : 0;
+                    let redAlive = playerHp > 0 && myTeam === 'red' ? 1 : 0;
+
+                    for (let i = bots.length - 1; i >= 0; i--) { 
+                        let b = bots[i]; 
+                        if (!b.isDead) b.team === 'blue' ? blueAlive++ : redAlive++;
+                        b.update(delta); 
+                        if (b.isDead && !scene.children.includes(b.group)) bots.splice(i, 1); 
                     }
-                } else if (gameMode === 'online') {
-                    syncPlayer();
-                    for (let uid in otherPlayers) { const p = otherPlayers[uid]; if (!p.isDead) { p.group.position.lerp(p.targetPos, 0.2); p.group.rotation.y += (p.targetRy - p.group.rotation.y) * 0.2; } }
+
+                    for(let uid in otherPlayers) {
+                        let op = otherPlayers[uid];
+                        if (!op.isDead) op.team === 'blue' ? blueAlive++ : redAlive++;
+                    }
+
+                    // スコアボード更新
+                    document.getElementById('team-score').innerHTML = `<span style="color:#00bbff;">BLUE: ${blueAlive}</span> | <span style="color:#ff3355;">RED: ${redAlive}</span>`;
+
+                    // 試合終了判定 (時間切れ、またはどちらかが全滅)
+                    if (gameTimer <= 0 || blueAlive === 0 || redAlive === 0 || playerHp <= 0) {
+                        isTimeUp = true;
+                        let resultMsg = "";
+                        if (blueAlive > redAlive) resultMsg = myTeam === 'blue' ? "VICTORY! (BLUE WINS)" : "DEFEAT... (BLUE WINS)";
+                        else if (redAlive > blueAlive) resultMsg = myTeam === 'red' ? "VICTORY! (RED WINS)" : "DEFEAT... (RED WINS)";
+                        else resultMsg = "DRAW GAME";
+                        
+                        if (playerHp <= 0) resultMsg = "YOU DIED\n" + resultMsg;
+                        gameOver(resultMsg);
+                    }
+                    
+                    if (gameMode === 'online') syncPlayer();
                 }
 
                 if (envPoints) envPoints.rotation.y += 0.02 * delta;
