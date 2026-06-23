@@ -52,6 +52,17 @@
         #ready-btn { padding: 15px 40px; font-size: 24px; background-color: #555; color: #fff; border: none; border-radius: 5px; cursor: not-allowed; font-weight: bold; transition: all 0.3s; }
         #leave-lobby-btn { margin-top: 20px; padding: 10px 20px; font-size: 18px; background-color: transparent; color: #aaa; border: 1px solid #aaa; border-radius: 5px; cursor: pointer; }
         
+        /* ゲームオーバーUI */
+        #gameover-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; z-index: 120; backdrop-filter: blur(10px); }
+        #gameover-title { font-size: 64px; margin-bottom: 10px; color: #ff0055; text-shadow: 0 0 20px #ff0055; text-transform: uppercase; font-weight: bold; text-align: center; }
+        #gameover-text { font-size: 32px; color: #fff; margin-bottom: 30px; text-align: center; }
+        .gameover-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .action-btn { padding: 15px 30px; font-size: 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        #retry-btn { background-color: #ff0055; color: white; }
+        #retry-btn:hover { background-color: #ff3377; transform: scale(1.05); }
+        #menu-btn { background-color: #555; color: white; }
+        #menu-btn:hover { background-color: #777; transform: scale(1.05); }
+
         /* チーム戦用マッチUI */
         #match-ui { position: absolute; top: 15px; width: 100%; text-align: center; pointer-events: none; text-shadow: 0 0 5px #000; z-index: 101; display: none; }
         #timer { font-size: 44px; color: #fff; font-weight: bold; font-family: monospace; letter-spacing: 2px; }
@@ -74,6 +85,9 @@
 
         #switch-weapon-btn { position: absolute; bottom: 160px; right: 120px; width: 80px; height: 80px; background: rgba(0, 0, 0, 0.6); border: 2px solid #ccc; border-radius: 50%; color: white; font-weight: bold; font-size: 14px; display: flex; justify-content: center; align-items: center; pointer-events: auto; touch-action: none; user-select: none; }
         #switch-weapon-btn:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.95); }
+
+        /* スワイプ視点移動用の全画面感知オーバーレイ領域 */
+        #touch-look-zone { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 5; touch-action: none; }
 
         @keyframes victoryGlow { 0% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); } 50% { text-shadow: 0 0 30px #00ffcc, 0 0 50px #00ffcc; transform: scale(1.1); color: #fff; } 100% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); } }
         .victory-text { animation: victoryGlow 1.5s infinite; color: #ffeb3b !important; }
@@ -109,6 +123,7 @@
         </div>
         <div id="score-display">SCORE: <span id="score">0</span></div>
         
+        <!-- スタートメニュー (固定HTML) -->
         <div id="start-screen">
             <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
             <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
@@ -138,12 +153,23 @@
             <button id="start-btn">GAME START</button>
         </div>
 
+        <!-- ロビー画面 -->
         <div id="lobby-screen">
             <h2 style="color:#00ffcc; font-size:48px; text-shadow:0 0 20px #00ffcc;">MATCHING LOBBY</h2>
             <div id="lobby-players">WAITING FOR PLAYERS... (1/10)</div>
             <ul id="lobby-player-list"></ul>
             <button id="ready-btn">WAITING FOR 2+ PLAYERS</button>
             <button id="leave-lobby-btn">CANCEL / BACK</button>
+        </div>
+
+        <!-- ゲームオーバー画面 -->
+        <div id="gameover-screen">
+            <h1 id="gameover-title">MATCH ENDED</h1>
+            <p id="gameover-text">SCORE/KILLS: 0</p>
+            <div class="gameover-buttons">
+                <button id="retry-btn" class="action-btn">PLAY AGAIN</button>
+                <button id="menu-btn" class="action-btn">MENU</button>
+            </div>
         </div>
     </div>
 
@@ -310,7 +336,7 @@
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1); item.add(cross2);
+                item.add(cross1, cross2);
                 let px, pz, att=0; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; att++; } while (Math.abs(px) < 10 && Math.abs(pz) < 10 && att<50);
                 item.position.set(px, 1.5, pz); item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item); tempHealItems.push(item);
@@ -435,7 +461,7 @@
             buildStage('neon');
             createWeapons();
             
-            // イベントリスナーの登録（絶対に発火させるため onclick プロパティで直接代入）
+            // イベントリスナーの登録
             setupUIEvents();
 
             window.addEventListener('resize', onWindowResize);
@@ -459,62 +485,72 @@
             playerHp = playerMaxHp;
         }
 
+        // --- DOMのイベント登録 ---
         function setupUIEvents() {
-            const modeContainer = document.getElementById('mode-container');
-            if (modeContainer) {
-                modeContainer.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.onclick = (e) => {
-                        modeContainer.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                        e.currentTarget.classList.add('active'); gameMode = e.currentTarget.getAttribute('data-mode');
-                    };
-                });
-            }
+            document.getElementById('mode-container').addEventListener('click', (e) => {
+                if(e.target.closest('.mode-btn')) {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    const btn = e.target.closest('.mode-btn');
+                    btn.classList.add('active'); 
+                    gameMode = btn.getAttribute('data-mode');
+                }
+            });
             
-            const classContainer = document.getElementById('class-container');
-            if (classContainer) {
-                classContainer.querySelectorAll('.class-btn').forEach(btn => {
-                    btn.onclick = (e) => {
-                        classContainer.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
-                        e.currentTarget.classList.add('active'); playerClass = e.currentTarget.getAttribute('data-class');
-                    };
-                });
-            }
+            document.getElementById('class-container').addEventListener('click', (e) => {
+                if(e.target.closest('.class-btn')) {
+                    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+                    const btn = e.target.closest('.class-btn');
+                    btn.classList.add('active'); 
+                    playerClass = btn.getAttribute('data-class');
+                }
+            });
 
-            const sensSlider = document.getElementById('sensitivity-slider');
-            if(sensSlider) sensSlider.oninput = (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); };
+            document.getElementById('sensitivity-slider').addEventListener('input', (e) => { 
+                sensitivity = parseFloat(e.target.value); 
+                document.getElementById('sens-val').innerText = sensitivity.toFixed(1); 
+            });
             
-            const startBtn = document.getElementById('start-btn');
-            if(startBtn) {
-                startBtn.onclick = () => {
-                    if (gameMode === 'online') {
-                        if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
-                        enterLobby();
-                    } else {
-                        // ロック要求後、即座にゲームを開始してフリーズを回避
-                        if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
-                        enterGameUI(); 
-                    }
-                };
-            }
+            document.getElementById('start-btn').addEventListener('click', () => {
+                if (gameMode === 'online') {
+                    if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
+                    enterLobby();
+                } else {
+                    if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(err) {} }
+                    enterGameUI(); 
+                }
+            });
 
-            const readyBtn = document.getElementById('ready-btn');
-            if (readyBtn) {
-                readyBtn.onclick = () => {
-                    if (!myReadyStatus && onlinePlayerCount >= 2) {
-                        myReadyStatus = true;
-                        readyBtn.innerText = "WAITING FOR OTHERS..."; readyBtn.style.backgroundColor = "#555"; readyBtn.style.color = "#fff"; readyBtn.style.cursor = "not-allowed"; readyBtn.disabled = true;
-                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid), { ready: true }).catch(()=>{});
-                    }
-                };
-            }
+            document.getElementById('ready-btn').addEventListener('click', () => {
+                if (!myReadyStatus && onlinePlayerCount >= 2) {
+                    myReadyStatus = true;
+                    const rbtn = document.getElementById('ready-btn');
+                    rbtn.innerText = "WAITING FOR OTHERS..."; rbtn.style.backgroundColor = "#555"; rbtn.style.color = "#fff"; rbtn.style.cursor = "not-allowed";
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid), { ready: true }).catch(()=>{});
+                }
+            });
 
-            const leaveBtn = document.getElementById('leave-lobby-btn');
-            if (leaveBtn) {
-                leaveBtn.onclick = async () => {
-                    if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
-                    if (currentUser && db) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid)).catch(()=>{});
-                    document.getElementById('lobby-screen').style.display = 'none'; showMainMenu();
-                };
+            document.getElementById('leave-lobby-btn').addEventListener('click', async () => {
+                if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
+                if (currentUser && db) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid)).catch(()=>{});
+                document.getElementById('lobby-screen').style.display = 'none'; showMainMenu();
+            });
+
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                document.getElementById('gameover-screen').style.display = 'none';
+                if (gameMode === 'online') { enterLobby(); }
+                else { 
+                    if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} } 
+                    enterGameUI(); 
+                }
+            });
+
+            document.getElementById('menu-btn').addEventListener('click', () => {
+                document.getElementById('gameover-screen').style.display = 'none';
+                showMainMenu();
+            });
+
+            if (isTouchDevice) {
+                document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ 画面のどこでもスワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
             }
         }
 
@@ -541,9 +577,9 @@
 
                 const readyBtn = document.getElementById('ready-btn');
                 if (onlinePlayerCount >= 2) {
-                    if (!myReadyStatus) { readyBtn.innerText = "READY?"; readyBtn.style.backgroundColor = "#00ffcc"; readyBtn.style.color = "#000"; readyBtn.style.cursor = "pointer"; readyBtn.disabled = false; }
+                    if (!myReadyStatus) { readyBtn.innerText = "READY?"; readyBtn.style.backgroundColor = "#00ffcc"; readyBtn.style.color = "#000"; readyBtn.style.cursor = "pointer"; }
                 } else {
-                    readyBtn.innerText = "WAITING FOR 2+ PLAYERS"; readyBtn.style.backgroundColor = "#555"; readyBtn.style.color = "#fff"; readyBtn.style.cursor = "not-allowed"; readyBtn.disabled = true;
+                    readyBtn.innerText = "WAITING FOR 2+ PLAYERS"; readyBtn.style.backgroundColor = "#555"; readyBtn.style.color = "#fff"; readyBtn.style.cursor = "not-allowed";
                 }
 
                 if (onlinePlayerCount >= 2 && readyCount === onlinePlayerCount) {
@@ -571,29 +607,7 @@
         }
 
         function showMainMenu() {
-            const startScreen = document.getElementById('start-screen');
-            startScreen.style.display = 'flex';
-            startScreen.innerHTML = `
-                <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
-                <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
-                <div class="class-select" id="class-container">
-                    <button class="class-btn ${playerClass==='soldier'?'active':''}" data-class="soldier">SOLDIER<span>バランス標準</span></button>
-                    <button class="class-btn ${playerClass==='tank'?'active':''}" data-class="tank">TANK<span>高HP/鈍足/硬い</span></button>
-                    <button class="class-btn ${playerClass==='scout'?'active':''}" data-class="scout">SCOUT<span>超高速/低HP</span></button>
-                    <button class="class-btn ${playerClass==='berserker'?'active':''}" data-class="berserker">BERSERKER<span>高火力/紙装甲</span></button>
-                </div>
-                <div class="mode-select" id="mode-container">
-                    <button class="mode-btn ${gameMode==='cpu'?'active':''}" data-mode="cpu">CPU 5v5 BATTLE</button>
-                    <button class="mode-btn ${gameMode==='online'?'active':''}" data-mode="online">ONLINE 5v5 BATTLE</button>
-                    <button class="mode-btn ${gameMode==='score'?'active':''}" data-mode="score">SCORE MODE (SOLO)</button>
-                </div>
-                <div class="settings"><label>SENSITIVITY (視点感度): <span id="sens-val">${sensitivity.toFixed(1)}</span></label><input type="range" id="sensitivity-slider" min="0.1" max="3.0" step="0.1" value="${sensitivity}"></div>
-                <div class="controls-info" id="controls-text"><p>[ WASD ]: 移動 / [ Space ]: ジャンプ / [ Shift ]: ダッシュ / [ マウス ]: 視点</p><p>[ 左クリック ]: 射撃（長押し可）/ [ 1, 2, 3 ]: 武器変更</p></div>
-                <button id="start-btn">GAME START</button>
-            `;
-            if (isTouchDevice) document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ 画面のどこでもスワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
-            
-            setupUIEvents(); // 再度onclickをアタッチする
+            document.getElementById('start-screen').style.display = 'flex';
         }
 
         function createPlayerAvatar(colorHex) {
@@ -879,29 +893,24 @@
             const overlay = document.getElementById('damage-overlay'); overlay.style.opacity = '0.6'; setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
         function gameOver(customMsg) {
-            isGameRunning = false; if (document.exitPointerLock) document.exitPointerLock(); else exitGameUI();
+            exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
             
-            document.getElementById('match-ui').style.display = 'none';
-            const startScreen = document.getElementById('start-screen'); startScreen.style.display = 'flex';
+            const goScreen = document.getElementById('gameover-screen'); 
+            goScreen.style.display = 'flex';
             
             let resultText = customMsg || `SCORE/KILLS: ${score}`;
             let mainTitle = customMsg ? "MATCH ENDED" : "YOU DIED";
-            let titleClass = customMsg && customMsg.includes("VICTORY") ? "victory-text" : "";
-
-            startScreen.innerHTML = `
-                <h1 class="${titleClass}" style="color:#ff0055; text-shadow:0 0 20px #ff0055;">${mainTitle}</h1>
-                <p style="font-size:28px;">${resultText}</p>
-                <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:20px;">
-                    <button id="restart-btn" style="padding: 15px 30px; font-size: 20px; background-color: #ff0055; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">PLAY AGAIN</button>
-                    <button id="menu-btn" style="padding: 15px 30px; font-size: 20px; background-color: #555; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight:bold;">MENU</button>
-                </div>
-            `;
-            document.getElementById('restart-btn').onclick = () => { 
-                if (gameMode === 'online') { enterLobby(); }
-                else { if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} } setTimeout(() => { enterGameUI(); }, 10); }
-            };
-            document.getElementById('menu-btn').onclick = () => { showMainMenu(); };
+            
+            const titleEl = document.getElementById('gameover-title');
+            titleEl.innerText = mainTitle;
+            if (customMsg && customMsg.includes("VICTORY")) {
+                titleEl.classList.add("victory-text");
+            } else {
+                titleEl.classList.remove("victory-text");
+            }
+            
+            document.getElementById('gameover-text').innerText = resultText;
         }
 
         const raycaster = new THREE.Raycaster();
@@ -967,89 +976,9 @@
             }
         }
 
-        // --- 武器UIの更新、武器切り替え、リロード処理 ---
-        function updateWeaponUI() {
-            const w = WEAPONS[currentWeaponIndex];
-            if (!w) return;
-            const nameEl = document.getElementById('weapon-name');
-            if (nameEl) {
-                nameEl.innerText = w.name;
-                nameEl.style.color = '#' + w.color.toString(16).padStart(6, '0');
-            }
-            const ammoEl = document.getElementById('ammo-display');
-            if (ammoEl) {
-                if (isReloading) {
-                    ammoEl.innerText = "RELOADING...";
-                    ammoEl.style.color = "#ff0000";
-                } else {
-                    ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`;
-                    ammoEl.style.color = "#fff";
-                }
-            }
-            const ch = document.getElementById('crosshair');
-            if (ch) {
-                ch.style.color = '#' + w.color.toString(16).padStart(6, '0');
-                ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`;
-            }
-        }
-
-        function switchWeapon(index) {
-            if (isReloading || !isGameRunning) return;
-            if (weaponGroups[currentWeaponIndex]) weaponGroups[currentWeaponIndex].visible = false;
-            currentWeaponIndex = index;
-            if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0;
-            if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1;
-            const group = weaponGroups[currentWeaponIndex];
-            if (group) {
-                group.visible = true;
-                group.position.set(0.25, -0.5, -0.2);
-                group.rotation.x = Math.PI / 4;
-                let t = 0;
-                const anim = setInterval(() => {
-                    t += 0.2;
-                    group.position.y += (-0.25 - group.position.y) * 0.4;
-                    group.position.z += (-0.5 - group.position.z) * 0.4;
-                    group.rotation.x += (0 - group.rotation.x) * 0.4;
-                    if (t >= 1) {
-                        clearInterval(anim);
-                        group.position.set(0.25, -0.25, -0.5);
-                        group.rotation.x = 0;
-                    }
-                }, 20);
-            }
-            updateWeaponUI();
-        }
-
-        function reload() {
-            if (isReloading) return;
-            isReloading = true;
-            const weapon = WEAPONS[currentWeaponIndex];
-            updateWeaponUI();
-            const activeGroup = weaponGroups[currentWeaponIndex];
-            let t = 0;
-            const reloadAnim = setInterval(() => {
-                t += 0.1;
-                if (activeGroup) {
-                    activeGroup.rotation.x = Math.sin(t) * 0.5;
-                    activeGroup.position.y = -0.25 - Math.sin(t) * 0.2;
-                }
-                if (t > Math.PI) {
-                    clearInterval(reloadAnim);
-                    if (activeGroup) {
-                        activeGroup.rotation.x = 0;
-                        activeGroup.position.y = -0.25;
-                    }
-                    weapon.ammo = weapon.maxAmmo;
-                    isReloading = false;
-                    updateWeaponUI();
-                }
-            }, weapon.reloadTime / (Math.PI / 0.1));
-        }
-
-        // --- マウスホイールイベント ---
-        function onWheel(event) {
-            if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1);
-        }
+        function updateWeaponUI() { const w = WEAPONS[currentWeaponIndex]; document.getElementById('weapon-name').innerText = w.name; document.getElementById('weapon-name').style.color = '#' + w.color.toString(16).padStart(6, '0'); const ammoEl = document.getElementById('ammo-display'); if (isReloading) { ammoEl.innerText = "RELOADING..."; ammoEl.style.color = "#ff0000"; } else { ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`; ammoEl.style.color = "#fff"; } const ch = document.getElementById('crosshair'); ch.style.color = '#' + w.color.toString(16).padStart(6, '0'); ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`; }
+        function switchWeapon(index) { if (isReloading || !isGameRunning) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
+        function reload() { if (isReloading) return; isReloading = true; const weapon = WEAPONS[currentWeaponIndex]; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
 
         // --- PC操作 ---
         function setupMouseControls() {
@@ -1077,6 +1006,7 @@
 
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
+        function onWheel(event) { if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1); }
 
         // --- モバイルの全画面＋ボタンスワイプ視点操作 ---
         let activeTouches = {};
