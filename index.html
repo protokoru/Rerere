@@ -22,8 +22,28 @@
         #score-display { position: absolute; top: 20px; right: 20px; font-size: 32px; color: #fff; font-weight: bold; display: none; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
         
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 10, 20, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; backdrop-filter: blur(5px); z-index: 105; }
-        #start-screen h1 { font-size: 56px; margin-bottom: 10px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
-        #start-screen p { font-size: 18px; color: #ccc; margin-bottom: 20px; text-align: center; max-width: 80%; }
+        #start-screen h1 { font-size: 56px; margin-bottom: 5px; color: #00ffcc; text-shadow: 0 0 20px #00ffcc; text-transform: uppercase; letter-spacing: 5px; text-align: center; line-height: 1.2; }
+        #start-screen p { font-size: 16px; color: #ccc; margin-bottom: 15px; text-align: center; max-width: 80%; }
+        
+        /* クラス選択UI */
+        .class-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .class-btn { padding: 10px; font-size: 16px; background: rgba(255,255,255,0.1); border: 2px solid #555; color: #ccc; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-weight: bold; width: 130px; }
+        .class-btn.active { background: rgba(0,255,204,0.3); border-color: #00ffcc; color: #fff; text-shadow: 0 0 5px #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.5); }
+        .class-btn span { font-size: 12px; font-weight: normal; display: block; margin-top: 5px; color: #aaa; }
+        .class-btn.active span { color: #fff; }
+
+        .mode-select { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
+        .mode-btn { padding: 8px 16px; font-size: 16px; background: rgba(255,255,255,0.1); border: 2px solid #555; color: #ccc; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-weight: bold; }
+        .mode-btn.active { background: rgba(0,255,204,0.3); border-color: #00ffcc; color: #fff; text-shadow: 0 0 5px #00ffcc; }
+        
+        .settings { margin-bottom: 20px; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #333; }
+        .settings label { display: block; font-size: 14px; color: #aaa; margin-bottom: 5px; }
+        .settings input[type=range] { width: 200px; cursor: pointer; }
+        
+        .controls-info { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 13px; }
+        #start-btn { padding: 15px 40px; font-size: 24px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,204,0.5); }
+        #start-btn:hover { background-color: #fff; box-shadow: 0 0 25px rgba(255,255,255,0.8); transform: scale(1.05); }
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; }
         
         /* オンラインロビーUI */
         #lobby-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 15, 30, 0.95); flex-direction: column; justify-content: center; align-items: center; color: white; pointer-events: auto; z-index: 110; backdrop-filter: blur(10px); }
@@ -31,18 +51,6 @@
         #lobby-player-list { list-style: none; padding: 0; font-size: 22px; color: #ccc; margin-bottom: 30px; text-align: center; min-height: 150px; width: 300px; }
         #ready-btn { padding: 15px 40px; font-size: 24px; background-color: #555; color: #fff; border: none; border-radius: 5px; cursor: not-allowed; font-weight: bold; transition: all 0.3s; }
         #leave-lobby-btn { margin-top: 20px; padding: 10px 20px; font-size: 18px; background-color: transparent; color: #aaa; border: 1px solid #aaa; border-radius: 5px; cursor: pointer; }
-
-        .mode-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-        .mode-btn { padding: 10px 20px; font-size: 18px; background: rgba(255,255,255,0.1); border: 2px solid #555; color: #ccc; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-weight: bold; }
-        .mode-btn.active { background: rgba(0,255,204,0.3); border-color: #00ffcc; color: #fff; text-shadow: 0 0 5px #00ffcc; }
-        .settings { margin-bottom: 30px; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #333; }
-        .settings label { display: block; font-size: 16px; color: #aaa; margin-bottom: 5px; }
-        .settings input[type=range] { width: 200px; cursor: pointer; }
-        
-        .controls-info { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(0,255,200,0.3); line-height: 1.5; font-size: 14px; }
-        #start-btn { padding: 15px 40px; font-size: 24px; background-color: #00ffcc; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; box-shadow: 0 0 15px rgba(0,255,204,0.5); }
-        #start-btn:hover { background-color: #fff; box-shadow: 0 0 25px rgba(255,255,255,0.8); transform: scale(1.05); }
-        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.3s; }
         
         /* チーム戦用マッチUI */
         #match-ui { position: absolute; top: 15px; width: 100%; text-align: center; pointer-events: none; text-shadow: 0 0 5px #000; z-index: 101; display: none; }
@@ -68,11 +76,7 @@
         #switch-weapon-btn { position: absolute; bottom: 160px; right: 120px; width: 80px; height: 80px; background: rgba(0, 0, 0, 0.6); border: 2px solid #ccc; border-radius: 50%; color: white; font-weight: bold; font-size: 14px; display: flex; justify-content: center; align-items: center; pointer-events: auto; touch-action: none; user-select: none; }
         #switch-weapon-btn:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.95); }
 
-        @keyframes victoryGlow {
-            0% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); }
-            50% { text-shadow: 0 0 30px #00ffcc, 0 0 50px #00ffcc; transform: scale(1.1); color: #fff; }
-            100% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); }
-        }
+        @keyframes victoryGlow { 0% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); } 50% { text-shadow: 0 0 30px #00ffcc, 0 0 50px #00ffcc; transform: scale(1.1); color: #fff; } 100% { text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055; transform: scale(1); } }
         .victory-text { animation: victoryGlow 1.5s infinite; color: #ffeb3b !important; }
     </style>
 </head>
@@ -100,7 +104,7 @@
         <div id="hud">
             <div id="weapon-name">NEON SHOTGUN</div>
             <div class="hud-item" id="ammo-display">8 / 8</div>
-            <div class="hud-item">HP</div>
+            <div class="hud-item" id="hp-text">HP: 100 / 100</div>
             <div id="hp-bar"><div id="hp-fill"></div></div>
             <div id="stamina-bar"><div id="stamina-fill"></div></div>
         </div>
@@ -108,9 +112,17 @@
         
         <div id="start-screen">
             <h1>Multiverse<br>5v5 Arena</h1>
-            <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。より多くの生存者を残したチームの勝利！</p>
+            <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。</p>
 
-            <div class="mode-select">
+            <!-- クラス（キャラクター）選択 -->
+            <div class="class-select" id="class-container">
+                <button class="class-btn active" data-class="soldier">SOLDIER<span>バランス標準</span></button>
+                <button class="class-btn" data-class="tank">TANK<span>高HP / 鈍足 / 硬い</span></button>
+                <button class="class-btn" data-class="scout">SCOUT<span>超高速 / 低HP</span></button>
+                <button class="class-btn" data-class="berserker">BERSERKER<span>高火力 / 紙装甲</span></button>
+            </div>
+
+            <div class="mode-select" id="mode-container">
                 <button class="mode-btn active" data-mode="cpu">CPU 5v5 BATTLE</button>
                 <button class="mode-btn" data-mode="online">ONLINE 5v5 BATTLE</button>
                 <button class="mode-btn" data-mode="score">SCORE MODE (SOLO)</button>
@@ -172,10 +184,19 @@
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
         let prevTime = performance.now();
-        let score = 0, playerHp = 100, isGameRunning = false;
+        let score = 0, isGameRunning = false;
         let gameMode = 'cpu', sensitivity = 1.0;
         let velocityY = 0, isGrounded = true;
         const gravity = 40.0, jumpForce = 16.0; 
+
+        // プレイヤーのクラスステータス
+        let playerClass = 'soldier';
+        let playerMaxHp = 100;
+        let playerHp = 100;
+        let playerBaseSpeed = 50.0;
+        let playerDashSpeed = 80.0;
+        let damageMultiplier = 1.0;
+        let defenseMultiplier = 1.0;
 
         let stamina = 100;
         const maxStamina = 100;
@@ -190,7 +211,7 @@
 
         let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
         let isShooting = false;
-        const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2, playerSpeed = 50.0;
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2;
 
         const WEAPONS = [
             { name: "NEON SHOTGUN", ammo: 8, maxAmmo: 8, damage: 25, pelletCount: 10, spread: 0.15, fireRate: 800, reloadTime: 1500, color: 0x00ffcc, recoilXRot: 0.15, auto: false, length: 40 },
@@ -298,7 +319,7 @@
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1); item.add(cross2);
+                item.add(cross1, cross2);
                 let px, pz, att=0; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; att++; } while (Math.abs(px) < 10 && Math.abs(pz) < 10 && att<50);
                 item.position.set(px, 1.5, pz); item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item); tempHealItems.push(item);
@@ -328,7 +349,7 @@
                     if (Math.random() > 0.4) {
                         const m1 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat); const m2 = new THREE.Mesh(wd.geo.clone().scale(0.35, 1, 1), mat);
                         if(wd.geo.parameters.width > wd.geo.parameters.depth) { m1.position.set(wd.pos[0] - w*0.3, wd.pos[1], wd.pos[2]); m2.position.set(wd.pos[0] + w*0.3, wd.pos[1], wd.pos[2]); } else { m1.position.set(wd.pos[0], wd.pos[1], wd.pos[2] - d*0.3); m2.position.set(wd.pos[0], wd.pos[1], wd.pos[2] + d*0.3); }
-                        m1.userData.isWall = true; m2.userData.isWall = true; group.add(m1); group.add(m2); tempCollidables.push(m1, m2);
+                        m1.userData.isWall = true; m2.userData.isWall = true; group.add(m1, m2); tempCollidables.push(m1, m2);
                     } else { const m = new THREE.Mesh(wd.geo, mat); m.position.set(...wd.pos); m.userData.isWall = true; group.add(m); tempCollidables.push(m); }
                 }
             });
@@ -365,7 +386,7 @@
             const pump = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.25), woodMat); pump.position.set(0, -0.05, -0.3); pump.name = "pump";
             const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.1), woodMat); grip.position.set(0, -0.15, 0.2); grip.rotation.x = -Math.PI/6;
             const sight = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.02), sgHl); sight.position.set(0, 0.05, -0.78);
-            sgGroup.add(b1); sgGroup.add(b2); sgGroup.add(rec); sgGroup.add(pump); sgGroup.add(grip); sgGroup.add(sight); weaponGroups.push(sgGroup);
+            sgGroup.add(b1, b2, rec, pump, grip, sight); weaponGroups.push(sgGroup);
 
             const rfGroup = new THREE.Group(); const rfHl = new THREE.MeshBasicMaterial({ color: WEAPONS[1].color });
             const rfBody = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 0.6), darkMat); rfBody.position.set(0, 0, -0.15);
@@ -377,7 +398,7 @@
             const rfGrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.08), woodMat); rfGrip.position.set(0, -0.18, 0.15); rfGrip.rotation.x = -Math.PI/8;
             const rfSightBase = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.1), metalMat); rfSightBase.position.set(0, 0.1, 0);
             const rfHolo = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), new THREE.MeshBasicMaterial({color: 0xff0055, transparent: true, opacity: 0.7, side: THREE.DoubleSide})); rfHolo.position.set(0, 0.15, -0.05);
-            rfGroup.add(rfBody); rfGroup.add(rfStock); rfGroup.add(rfBarrelTop); rfGroup.add(rfBarrelBot); rfGroup.add(rfCore); rfGroup.add(rfMag); rfGroup.add(rfGrip); rfGroup.add(rfSightBase); rfGroup.add(rfHolo); weaponGroups.push(rfGroup);
+            rfGroup.add(rfBody, rfStock, rfBarrelTop, rfBarrelBot, rfCore, rfMag, rfGrip, rfSightBase, rfHolo); weaponGroups.push(rfGroup);
 
             const rgGroup = new THREE.Group(); const rgHl = new THREE.MeshBasicMaterial({ color: WEAPONS[2].color });
             const rgBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.4), darkMat); rgBody.position.set(0, 0, 0.1);
@@ -386,7 +407,7 @@
             const rgEnergy = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.7), rgHl); rgEnergy.position.set(0, 0, -0.45);
             const rgScope = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.2).rotateX(Math.PI/2), metalMat); rgScope.position.set(0, 0.12, 0.05);
             const rgGrip2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.1), woodMat); rgGrip2.position.set(0, -0.15, 0.2); rgGrip2.rotation.x = -Math.PI/6;
-            rgGroup.add(rgBody); rgGroup.add(rail1); rgGroup.add(rail2); rgGroup.add(rgEnergy); rgGroup.add(rgScope); rgGroup.add(rgGrip2); weaponGroups.push(rgGroup);
+            rgGroup.add(rgBody, rail1, rail2, rgEnergy, rgScope, rgGrip2); weaponGroups.push(rgGroup);
 
             weaponGroups.forEach((group, index) => { group.position.set(0.25, -0.25, -0.5); group.visible = (index === currentWeaponIndex); camera.add(group); });
         }
@@ -425,56 +446,136 @@
 
             if (isTouchDevice) setupTouchControls();
 
+            // PointerLock解除時にメニュー表示
             document.addEventListener('pointerlockchange', function() {
-                if (document.pointerLockElement === document.body) enterGameUI(); else exitGameUI();
+                if (document.pointerLockElement !== document.body && isGameRunning && !isTouchDevice) {
+                    exitGameUI(); showMainMenu();
+                }
             });
             updateWeaponUI();
         }
 
+        // --- クラス設定適用 ---
+        function applyPlayerClass() {
+            switch(playerClass) {
+                case 'soldier': playerMaxHp = 100; playerBaseSpeed = 50.0; playerDashSpeed = 80.0; damageMultiplier = 1.0; defenseMultiplier = 1.0; break;
+                case 'tank': playerMaxHp = 200; playerBaseSpeed = 35.0; playerDashSpeed = 55.0; damageMultiplier = 1.0; defenseMultiplier = 0.7; break;
+                case 'scout': playerMaxHp = 70; playerBaseSpeed = 65.0; playerDashSpeed = 100.0; damageMultiplier = 1.0; defenseMultiplier = 1.2; break;
+                case 'berserker': playerMaxHp = 100; playerBaseSpeed = 50.0; playerDashSpeed = 80.0; damageMultiplier = 1.5; defenseMultiplier = 1.5; break;
+            }
+            playerHp = playerMaxHp;
+        }
+
         function setupUIEvents() {
-            document.querySelectorAll('.mode-btn').forEach(btn => {
+            // モード選択
+            document.getElementById('mode-container').querySelectorAll('.mode-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    document.getElementById('mode-container').querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active'); gameMode = e.target.getAttribute('data-mode');
                 });
             });
-            const sensSlider = document.getElementById('sensitivity-slider');
-            sensSlider.addEventListener('input', (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); });
-            document.getElementById('start-btn').addEventListener('click', () => {
-                if (gameMode === 'online' && !currentUser) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
-                if (isTouchDevice) enterGameUI();
-                else { try { document.body.requestPointerLock(); } catch(e) { enterGameUI(); } }
+            // クラス選択
+            document.getElementById('class-container').querySelectorAll('.class-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.getElementById('class-container').querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active'); playerClass = e.currentTarget.getAttribute('data-class');
+                });
             });
+
+            const sensSlider = document.getElementById('sensitivity-slider');
+            if(sensSlider) sensSlider.addEventListener('input', (e) => { sensitivity = parseFloat(e.target.value); document.getElementById('sens-val').innerText = sensitivity.toFixed(1); });
+            
+            const startBtn = document.getElementById('start-btn');
+            if(startBtn) {
+                const newBtn = startBtn.cloneNode(true); startBtn.parentNode.replaceChild(newBtn, startBtn);
+                newBtn.addEventListener('click', () => {
+                    if (gameMode === 'online') {
+                        if (!currentUser || !db) { alert("サーバーに接続中です。しばらくお待ちください。"); return; }
+                        enterLobby();
+                    } else {
+                        enterGameUI();
+                        if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
+                    }
+                });
+            }
+
+            const readyBtn = document.getElementById('ready-btn');
+            if (readyBtn) {
+                const newReadyBtn = readyBtn.cloneNode(true); readyBtn.parentNode.replaceChild(newReadyBtn, readyBtn);
+                newReadyBtn.addEventListener('click', () => {
+                    if (!myReadyStatus && onlinePlayerCount >= 2) {
+                        myReadyStatus = true;
+                        newReadyBtn.innerText = "WAITING FOR OTHERS..."; newReadyBtn.style.backgroundColor = "#555"; newReadyBtn.style.color = "#fff"; newReadyBtn.style.cursor = "not-allowed"; newReadyBtn.disabled = true;
+                        updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid), { ready: true }).catch(()=>{});
+                    }
+                });
+            }
+
+            const leaveBtn = document.getElementById('leave-lobby-btn');
+            if (leaveBtn) {
+                const newLeaveBtn = leaveBtn.cloneNode(true); leaveBtn.parentNode.replaceChild(newLeaveBtn, leaveBtn);
+                newLeaveBtn.addEventListener('click', async () => {
+                    if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
+                    if (currentUser && db) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid)).catch(()=>{});
+                    document.getElementById('lobby-screen').style.display = 'none'; showMainMenu();
+                });
+            }
+        }
+
+        function enterLobby() {
+            document.getElementById('start-screen').style.display = 'none'; document.getElementById('lobby-screen').style.display = 'flex';
+            myReadyStatus = false;
+            
+            const lobbyRef = doc(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers', currentUser.uid);
+            setDoc(lobbyRef, { ready: false, timestamp: serverTimestamp() }).catch(()=>{});
+
+            lobbyUnsubscribe = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'lobbyPlayers'), (snapshot) => {
+                onlinePlayerCount = snapshot.docs.length;
+                let readyCount = 0; let lobbyPlayersMap = {}; let listHTML = '';
+                
+                snapshot.docs.forEach(d => {
+                    const data = d.data(); lobbyPlayersMap[d.id] = data; if(data.ready) readyCount++;
+                    let pName = d.id === currentUser.uid ? "YOU" : "Player " + d.id.substring(0,4);
+                    let status = data.ready ? "<span style='color:#00ffcc;'>READY</span>" : "<span style='color:#ffaa00;'>WAITING</span>";
+                    listHTML += `<li style="margin:8px 0;">${pName} : ${status}</li>`;
+                });
+
+                document.getElementById('lobby-players').innerText = `PLAYERS IN LOBBY: ${onlinePlayerCount}/10`;
+                document.getElementById('lobby-player-list').innerHTML = listHTML;
+
+                const readyBtn = document.getElementById('ready-btn');
+                if (onlinePlayerCount >= 2) {
+                    if (!myReadyStatus) { readyBtn.innerText = "READY?"; readyBtn.style.backgroundColor = "#00ffcc"; readyBtn.style.color = "#000"; readyBtn.style.cursor = "pointer"; readyBtn.disabled = false; }
+                } else {
+                    readyBtn.innerText = "WAITING FOR 2+ PLAYERS"; readyBtn.style.backgroundColor = "#555"; readyBtn.style.color = "#fff"; readyBtn.style.cursor = "not-allowed"; readyBtn.disabled = true;
+                }
+
+                if (onlinePlayerCount >= 2 && readyCount === onlinePlayerCount) {
+                    if (lobbyUnsubscribe) { lobbyUnsubscribe(); lobbyUnsubscribe = null; }
+                    document.getElementById('lobby-screen').style.display = 'none';
+                    startOnlineMatch(lobbyPlayersMap);
+                }
+            }, (err) => console.error(err));
+        }
+
+        function startOnlineMatch(playersMap) {
+            const uids = Object.keys(playersMap).sort();
+            const myIndex = uids.indexOf(currentUser.uid);
+            myTeam = (myIndex % 2 === 0) ? 'blue' : 'red';
+            
+            let blueCount = 0, redCount = 0;
+            uids.forEach((u, idx) => { if (idx % 2 === 0) blueCount++; else redCount++; });
+            
+            const cpuBlue = Math.max(0, 5 - blueCount);
+            const cpuRed = Math.max(0, 5 - redCount);
+
+            enterGameUI();
+            if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
+            startGame(cpuBlue, cpuRed);
         }
 
         function showMainMenu() {
-            const startScreen = document.getElementById('start-screen');
-            startScreen.style.display = 'flex';
-            startScreen.innerHTML = `
-                <h1 style="color:#00ffcc; text-shadow:0 0 20px #00ffcc;">Multiverse<br>5v5 Arena</h1>
-                <p>2チームに分かれて戦うハイスピードデスマッチ！制限時間は2分。より多くの生存者を残したチームの勝利！</p>
-                <div class="mode-select">
-                    <button class="mode-btn ${gameMode==='cpu'?'active':''}" data-mode="cpu">CPU 5v5 BATTLE</button>
-                    <button class="mode-btn ${gameMode==='online'?'active':''}" data-mode="online">ONLINE 5v5 BATTLE</button>
-                    <button class="mode-btn ${gameMode==='score'?'active':''}" data-mode="score">SCORE MODE (SOLO)</button>
-                </div>
-                <div class="settings"><label>SENSITIVITY (視点感度): <span id="sens-val">${sensitivity.toFixed(1)}</span></label><input type="range" id="sensitivity-slider" min="0.1" max="3.0" step="0.1" value="${sensitivity}"></div>
-                <div class="controls-info" id="controls-text">
-                    <p>[ WASD ]: 移動 / [ Space ]: ジャンプ / [ Shift ]: ダッシュ / [ マウス ]: 視点</p>
-                    <p>[ 左クリック ]: 射撃（長押し可）/ [ 1, 2, 3 ]: 武器変更</p>
-                </div>
-                <button id="start-btn">GAME START</button>
-            `;
-            if (isTouchDevice) { document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ スワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`; }
-            setupUIEvents();
-        }
-
-        function createPlayerAvatar(colorHex) {
-            const group = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.5, roughness: 0.3 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), mat); body.position.y = 0.6;
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), mat); head.position.y = 1.45;
-            const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.55), new THREE.MeshBasicMaterial({color: 0xffffff})); visor.position.set(0, 1.45, -0.1);
-            group.add(body); group.add(head); group.add(visor); return { group, body, head };
+            document.getElementById('start-screen').style.display = 'flex';
         }
 
         function enterGameUI() {
@@ -494,10 +595,13 @@
 
         function startGame(cpuBlue = 4, cpuRed = 5) {
             isGameRunning = false; 
-            score = 0; playerHp = 100; gameTimer = 120; isTimeUp = false; stamina = 100; isStaminaExhausted = false;
+            
+            applyPlayerClass(); // キャラクターのステータスを適用
+
+            score = 0; gameTimer = 120; isTimeUp = false; stamina = 100; isStaminaExhausted = false;
             WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false;
             document.getElementById('score').innerText = score;
-            document.getElementById('hp-fill').style.width = '100%'; document.getElementById('hp-fill').style.backgroundColor = '#00ff88';
+            updatePlayerHpUI();
             document.getElementById('stamina-fill').style.width = '100%';
             updateWeaponUI();
             
@@ -518,10 +622,9 @@
             }
 
             if (gameMode === 'online') {
-                myTeam = Math.random() > 0.5 ? 'blue' : 'red';
                 camera.position.set(0, 10, myTeam === 'blue' ? 40 : -40);
                 startOnlineSync(); startMySync();
-                if (db && currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { x: camera.position.x, y: camera.position.y, z: camera.position.z, ry: 0, hp: 100, isDead: false, team: myTeam, timestamp: serverTimestamp() });
+                if (db && currentUser) setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { x: camera.position.x, y: camera.position.y, z: camera.position.z, ry: 0, hp: playerHp, isDead: false, team: myTeam, timestamp: serverTimestamp() });
                 for(let i=0; i<cpuBlue; i++) spawnBot('blue', (Math.random()-0.5)*30, 30 + Math.random()*10);
                 for(let i=0; i<cpuRed; i++) spawnBot('red', (Math.random()-0.5)*30, -30 - Math.random()*10);
             } else if (gameMode === 'cpu') {
@@ -535,7 +638,6 @@
             isGameRunning = true; 
         }
 
-        // --- オンライン通信 ---
         let lastSyncTime = 0;
         function syncPlayer() {
             if (!currentUser || !db || gameMode !== 'online') return;
@@ -574,7 +676,6 @@
             });
         }
 
-        // --- ボットAIクラス ---
         class Bot {
             constructor(x, z, team) {
                 const colorHex = team === 'blue' ? 0x00bbff : 0xff3355;
@@ -727,12 +828,21 @@
             takeDamage(amount) { this.hp -= amount; this.core.material.color.setHex(0xffffff); setTimeout(() => { if(this.core) this.core.material.color.setHex(0xffaaaa); }, 50); if (this.hp <= 0 && !this.isDead) this.die(); }
         }
 
-        function damagePlayer(amount = 20) { playerHp -= amount; updatePlayerHpUI(); if (playerHp <= 0) gameOver(); }
+        // キャラクター固有の防御力補正を適用
+        function damagePlayer(amount = 20) { playerHp -= amount * defenseMultiplier; updatePlayerHpUI(); if (playerHp <= 0) gameOver(); }
+        
         function updatePlayerHpUI() {
-            const hpFill = document.getElementById('hp-fill'); hpFill.style.width = Math.max(0, playerHp) + '%';
-            if (playerHp > 50) hpFill.style.backgroundColor = '#00ff88'; else if (playerHp > 20) hpFill.style.backgroundColor = '#ffaa00'; else hpFill.style.backgroundColor = '#ff0000';
+            const hpFill = document.getElementById('hp-fill'); 
+            hpFill.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + '%';
+            if (playerHp > playerMaxHp * 0.5) hpFill.style.backgroundColor = '#00ff88'; 
+            else if (playerHp > playerMaxHp * 0.2) hpFill.style.backgroundColor = '#ffaa00'; 
+            else hpFill.style.backgroundColor = '#ff0000';
+            
+            document.getElementById('hp-text').innerText = `HP: ${Math.ceil(playerHp)} / ${playerMaxHp}`;
+
             const overlay = document.getElementById('damage-overlay'); overlay.style.opacity = '0.6'; setTimeout(() => { overlay.style.opacity = '0'; }, 200);
         }
+
         function gameOver(customMsg) {
             isGameRunning = false; if (document.exitPointerLock) document.exitPointerLock(); else exitGameUI();
             if (gameMode === 'online' && db && currentUser) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', currentUser.uid), { isDead: true, hp: 0 }).catch(()=>{});
@@ -759,7 +869,6 @@
             document.getElementById('menu-btn').addEventListener('click', () => { showMainMenu(); });
         }
 
-        const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
             const weapon = WEAPONS[currentWeaponIndex], now = performance.now();
@@ -775,6 +884,9 @@
             const allTargets = targetBodies.concat(collidableMeshes);
             const muzzlePos = new THREE.Vector3(0, 0.05, -0.8).applyMatrix4(activeGroup.matrixWorld); 
 
+            // キャラクター固有のダメージ補正
+            const actualDamage = weapon.damage * damageMultiplier;
+
             for (let i = 0; i < weapon.pelletCount; i++) {
                 const dir = new THREE.Vector3(0, 0, -1); dir.x += (Math.random() - 0.5) * weapon.spread; dir.y += (Math.random() - 0.5) * weapon.spread; dir.normalize().applyQuaternion(camera.quaternion);
                 raycaster.set(camera.position, dir); 
@@ -784,12 +896,12 @@
                     drawLength = intersects[0].distance;
                     const hit = intersects[0].object; createParticles(intersects[0].point, weapon.color, 5, 2.0);
                     if (!collidableMeshes.includes(hit)) {
-                        if (gameMode === 'score') { const e = enemies.find(e => e.body === hit || e.body.children.includes(hit)); if (e) e.takeDamage(weapon.damage); } 
-                        else if (gameMode === 'cpu') { const b = bots.find(b => b.body === hit || b.head === hit); if (b) b.takeDamage(weapon.damage); } 
+                        if (gameMode === 'score') { const e = enemies.find(e => e.body === hit || e.body.children.includes(hit)); if (e) e.takeDamage(actualDamage); } 
+                        else if (gameMode === 'cpu') { const b = bots.find(b => b.body === hit || b.head === hit); if (b) b.takeDamage(actualDamage); } 
                         else if (gameMode === 'online') {
                             for (let uid in otherPlayers) {
                                 if (otherPlayers[uid].body === hit || otherPlayers[uid].head === hit) {
-                                    const newHp = Math.max(0, otherPlayers[uid].hp - weapon.damage);
+                                    const newHp = Math.max(0, otherPlayers[uid].hp - actualDamage);
                                     if (db) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', uid), { hp: newHp }).catch(()=>{});
                                     if (newHp <= 0 && otherPlayers[uid].hp > 0) { score += 100; document.getElementById('score').innerText = score; }
                                     otherPlayers[uid].hp = newHp; break;
@@ -829,13 +941,16 @@
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
         
-        let isDragging = false;
-        document.getElementById('game-container') ? document.getElementById('game-container').addEventListener('mousedown', () => { if(!isTouchDevice) isDragging = true; }) : document.body.addEventListener('mousedown', () => { if(!isTouchDevice) isDragging = true; });
-        document.getElementById('game-container') ? document.getElementById('game-container').addEventListener('mouseup', () => { isDragging = false; }) : document.body.addEventListener('mouseup', () => { isDragging = false; });
+        // PCの緊急回避用視点操作（ポインターロックが拒否されても左クリックドラッグで操作可能）
+        document.addEventListener('mousedown', (e) => {
+            if (isGameRunning && !isTouchDevice && document.pointerLockElement !== document.body) {
+                try { document.body.requestPointerLock(); } catch(err) {}
+            }
+        });
         
         function onMouseMove(event) { 
             if (!isGameRunning) return;
-            if (document.pointerLockElement === document.body || (!isTouchDevice && isDragging)) { 
+            if (document.pointerLockElement === document.body || (!isTouchDevice && event.buttons === 1)) { 
                 euler.setFromQuaternion(camera.quaternion); 
                 euler.y -= (event.movementX || 0) * 0.002 * sensitivity; 
                 euler.x -= (event.movementY || 0) * 0.002 * sensitivity; 
@@ -925,8 +1040,8 @@
                 healItems.forEach(item => {
                     if (item && item.userData && item.userData.active) {
                         item.rotation.y += delta * 2; item.rotation.x += delta;
-                        if (isGameRunning && playerHp > 0 && playerHp < 100 && camera.position.distanceTo(item.position) < 3.0) {
-                            playerHp = Math.min(100, playerHp + 30); updatePlayerHpUI(); item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15; createParticles(item.position, 0x00ff00, 20, 3.0);
+                        if (isGameRunning && playerHp > 0 && playerHp < playerMaxHp && camera.position.distanceTo(item.position) < 3.0) {
+                            playerHp = Math.min(playerMaxHp, playerHp + 30); updatePlayerHpUI(); item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15; createParticles(item.position, 0x00ff00, 20, 3.0);
                         }
                         bots.forEach(b => {
                             if (b && !b.isDead && b.hp < 100 && b.group && b.group.position.distanceTo(item.position) < 3.0) { b.hp = Math.min(100, b.hp + 30); item.userData.active = false; item.visible = false; item.userData.respawnTimer = 15; createParticles(item.position, 0x00ff00, 20, 3.0); }
@@ -940,14 +1055,14 @@
             if (isGameRunning && collidableMeshes.length > 0) {
                 if (isShooting && WEAPONS[currentWeaponIndex] && WEAPONS[currentWeaponIndex].auto) attemptShoot();
 
-                let currentSpeed = playerSpeed;
+                let currentSpeed = playerBaseSpeed;
                 const isMovingInput = (moveForward || moveBackward || moveLeft || moveRight || Math.abs(joystickVector.x) > 0.1 || Math.abs(joystickVector.y) > 0.1);
                 
                 if (stamina <= 0) { isStaminaExhausted = true; stamina = 0; }
                 if (stamina > 30) { isStaminaExhausted = false; }
 
                 if ((keys['ShiftLeft'] || keys['ShiftRight'] || isDashing) && !isStaminaExhausted && isMovingInput) {
-                    currentSpeed = 80.0; stamina -= 30 * delta;
+                    currentSpeed = playerDashSpeed; stamina -= 30 * delta;
                 } else {
                     stamina += 15 * delta;
                 }
