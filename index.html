@@ -200,7 +200,7 @@
 
         const clock = new THREE.Clock();
 
-        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null;
+        let joystickVector = { x: 0, y: 0 }, joystickTouchId = null, lookTouchId = null;
         let isShooting = false;
         const euler = new THREE.Euler(0, 0, 0, 'YXZ'), PI_2 = Math.PI / 2;
 
@@ -235,6 +235,7 @@
             ctx.fillStyle = '#ffffff'; ctx.fill(); return new THREE.CanvasTexture(canvas);
         }
 
+        // --- ランダムステージ生成 ---
         function buildStage(type) {
             const tempCollidables = [], tempJumpPads = [], tempHealItems = [];
 
@@ -309,7 +310,7 @@
                 const item = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), itemMat);
                 const cross1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
                 const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.6, 0.4), new THREE.MeshBasicMaterial({color:0xffffff}));
-                item.add(cross1, cross2);
+                item.add(cross1); item.add(cross2);
                 let px, pz, att=0; do { px = (Math.random() - 0.5) * 80; pz = (Math.random() - 0.5) * 80; att++; } while (Math.abs(px) < 10 && Math.abs(pz) < 10 && att<50);
                 item.position.set(px, 1.5, pz); item.userData = { isHeal: true, active: true, respawnTimer: 0 };
                 stageGroup.add(item); tempHealItems.push(item);
@@ -437,15 +438,10 @@
 
             window.addEventListener('resize', onWindowResize);
             document.addEventListener('keydown', onKeyDown); document.addEventListener('keyup', onKeyUp);
-            document.addEventListener('wheel', onWheel);
 
             if (isTouchDevice) setupTouchControls();
             else setupMouseControls();
 
-            document.addEventListener('pointerlockchange', function() {
-                if (document.pointerLockElement !== document.body && isGameRunning && !isTouchDevice) {
-                }
-            });
             updateWeaponUI();
         }
 
@@ -569,7 +565,8 @@
             const cpuRed = Math.max(0, 5 - redCount);
 
             if (!isTouchDevice) { try { document.body.requestPointerLock(); } catch(e) {} }
-            setTimeout(() => { startGame(cpuBlue, cpuRed); enterGameUI(); }, 10);
+            enterGameUI();
+            startGame(cpuBlue, cpuRed);
         }
 
         function showMainMenu() {
@@ -595,6 +592,28 @@
             `;
             if (isTouchDevice) document.getElementById('controls-text').innerHTML = `<p>[ ジョイスティック ]:移動 / [ スワイプ ]:視点 / [ JUMP ]:ジャンプ / [ DASH ]:ダッシュ</p><p>[ FIRE ]:射撃 / [ SWITCH ]:武器変更</p>`;
             setupUIEvents();
+        }
+
+        function createPlayerAvatar(colorHex) {
+            const group = new THREE.Group();
+            const mainMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
+            const teamMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.5, roughness: 0.5 });
+            const glowMat = new THREE.MeshBasicMaterial({ color: colorHex });
+
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.9, 0.5), mainMat); body.position.y = 0.75;
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.6, 0.55), teamMat); chest.position.y = 0.9;
+            const core = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), glowMat); core.position.set(0, 0.9, 0.28);
+            const pack = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.3), mainMat); pack.position.set(0, 0.8, -0.35);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), teamMat); head.position.y = 1.45;
+            const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.55), new THREE.MeshBasicMaterial({color: 0xffffff})); visor.position.set(0, 1.45, 0.05);
+            const sL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.6), teamMat); sL.position.set(0.55, 1.0, 0);
+            const sR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.6), teamMat); sR.position.set(-0.55, 1.0, 0);
+            
+            const collider = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 1.0), new THREE.MeshBasicMaterial({visible:false}));
+            collider.position.y = 0.9;
+            
+            group.add(body, chest, core, pack, head, visor, sL, sR, collider); 
+            return { group, body: collider, head: collider };
         }
 
         function enterGameUI() {
@@ -677,7 +696,7 @@
                             const avatar = createPlayerAvatar(avatarColor); scene.add(avatar.group);
                             otherPlayers[uid] = { ...avatar, targetPos: new THREE.Vector3(data.x, data.y, data.z), targetRy: data.ry, hp: data.hp, isDead: data.isDead, team: data.team };
                         }
-                        const p = otherPlayers[uid]; p.targetPos.set(data.x, data.y, data.z); p.targetRy = data.ry; p.hp = data.hp; p.isDead = data.isDead; p.group.visible = !data.isDead;
+                        const p = otherPlayers[uid]; p.targetPos.set(data.x, data.y, data.z); p.targetRy = data.ry; p.hp = data.hp; p.isDead = data.isDead; p.team = data.team; p.group.visible = !data.isDead;
                         if (data.isDead && change.type === 'modified') createParticles(p.group.position, p.team === 'blue' ? 0x00bbff : 0xff3355, 20, 3.0);
                     }
                     if (change.type === 'removed' && otherPlayers[uid]) { scene.remove(otherPlayers[uid].group); delete otherPlayers[uid]; }
@@ -883,6 +902,7 @@
             document.getElementById('menu-btn').addEventListener('click', () => { showMainMenu(); });
         }
 
+        const raycaster = new THREE.Raycaster();
         function attemptShoot() {
             if (!isGameRunning || isReloading) return;
             const weapon = WEAPONS[currentWeaponIndex], now = performance.now();
@@ -945,9 +965,89 @@
             }
         }
 
-        function updateWeaponUI() { const w = WEAPONS[currentWeaponIndex]; document.getElementById('weapon-name').innerText = w.name; document.getElementById('weapon-name').style.color = '#' + w.color.toString(16).padStart(6, '0'); const ammoEl = document.getElementById('ammo-display'); if (isReloading) { ammoEl.innerText = "RELOADING..."; ammoEl.style.color = "#ff0000"; } else { ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`; ammoEl.style.color = "#fff"; } const ch = document.getElementById('crosshair'); ch.style.color = '#' + w.color.toString(16).padStart(6, '0'); ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`; }
-        function switchWeapon(index) { if (isReloading || !isGameRunning) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
-        function reload() { if (isReloading) return; isReloading = true; const weapon = WEAPONS[currentWeaponIndex]; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
+        // --- 武器UIの更新、武器切り替え、リロード処理（復元した最重要の関数） ---
+        function updateWeaponUI() {
+            const w = WEAPONS[currentWeaponIndex];
+            if (!w) return;
+            const nameEl = document.getElementById('weapon-name');
+            if (nameEl) {
+                nameEl.innerText = w.name;
+                nameEl.style.color = '#' + w.color.toString(16).padStart(6, '0');
+            }
+            const ammoEl = document.getElementById('ammo-display');
+            if (ammoEl) {
+                if (isReloading) {
+                    ammoEl.innerText = "RELOADING...";
+                    ammoEl.style.color = "#ff0000";
+                } else {
+                    ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`;
+                    ammoEl.style.color = "#fff";
+                }
+            }
+            const ch = document.getElementById('crosshair');
+            if (ch) {
+                ch.style.color = '#' + w.color.toString(16).padStart(6, '0');
+                ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`;
+            }
+        }
+
+        function switchWeapon(index) {
+            if (isReloading || !isGameRunning) return;
+            if (weaponGroups[currentWeaponIndex]) weaponGroups[currentWeaponIndex].visible = false;
+            currentWeaponIndex = index;
+            if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0;
+            if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1;
+            const group = weaponGroups[currentWeaponIndex];
+            if (group) {
+                group.visible = true;
+                group.position.set(0.25, -0.5, -0.2);
+                group.rotation.x = Math.PI / 4;
+                let t = 0;
+                const anim = setInterval(() => {
+                    t += 0.2;
+                    group.position.y += (-0.25 - group.position.y) * 0.4;
+                    group.position.z += (-0.5 - group.position.z) * 0.4;
+                    group.rotation.x += (0 - group.rotation.x) * 0.4;
+                    if (t >= 1) {
+                        clearInterval(anim);
+                        group.position.set(0.25, -0.25, -0.5);
+                        group.rotation.x = 0;
+                    }
+                }, 20);
+            }
+            updateWeaponUI();
+        }
+
+        function reload() {
+            if (isReloading) return;
+            isReloading = true;
+            const weapon = WEAPONS[currentWeaponIndex];
+            updateWeaponUI();
+            const activeGroup = weaponGroups[currentWeaponIndex];
+            let t = 0;
+            const reloadAnim = setInterval(() => {
+                t += 0.1;
+                if (activeGroup) {
+                    activeGroup.rotation.x = Math.sin(t) * 0.5;
+                    activeGroup.position.y = -0.25 - Math.sin(t) * 0.2;
+                }
+                if (t > Math.PI) {
+                    clearInterval(reloadAnim);
+                    if (activeGroup) {
+                        activeGroup.rotation.x = 0;
+                        activeGroup.position.y = -0.25;
+                    }
+                    weapon.ammo = weapon.maxAmmo;
+                    isReloading = false;
+                    updateWeaponUI();
+                }
+            }, weapon.reloadTime / (Math.PI / 0.1));
+        }
+
+        // --- マウスホイールイベント ---
+        function onWheel(event) {
+            if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1);
+        }
 
         // --- PC操作 ---
         function setupMouseControls() {
@@ -975,63 +1075,91 @@
 
         function onKeyDown(event) { if (!isGameRunning) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
-        function onWheel(event) { if (isGameRunning) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1); }
 
         // --- モバイルの全画面＋ボタンスワイプ視点操作 ---
         let activeTouches = {};
         function setupTouchControls() {
-            const touchLookZone = document.getElementById('touch-look-zone'), joystickZone = document.getElementById('joystick-zone'), joystickKnob = document.getElementById('joystick-knob');
-            touchLookZone.addEventListener('touchstart', (e) => { e.preventDefault(); if (lookTouchId === null) { lookTouchId = e.changedTouches[0].identifier; previousTouch.x = e.changedTouches[0].clientX; previousTouch.y = e.changedTouches[0].clientY; } }, {passive: false});
-            touchLookZone.addEventListener('touchmove', (e) => { e.preventDefault(); if (!isGameRunning) return; for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === lookTouchId) { const touch = e.changedTouches[i]; euler.setFromQuaternion(camera.quaternion); euler.y -= (touch.clientX - previousTouch.x) * 0.005 * sensitivity; euler.x -= (touch.clientY - previousTouch.y) * 0.005 * sensitivity; euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); camera.quaternion.setFromEuler(euler); previousTouch.x = touch.clientX; previousTouch.y = touch.clientY; break; } } }, {passive: false});
-            const resetLook = (e) => { e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === lookTouchId) { lookTouchId = null; break; } } };
-            touchLookZone.addEventListener('touchend', resetLook, {passive: false}); touchLookZone.addEventListener('touchcancel', resetLook, {passive: false});
-
+            const joystickZone = document.getElementById('joystick-zone');
+            const joystickKnob = document.getElementById('joystick-knob');
             const maxRadius = 100;
-            const updateJoystick = (touch) => { const rect = joystickZone.getBoundingClientRect(); let dx = touch.clientX - (rect.left + rect.width / 2), dy = touch.clientY - (rect.top + rect.height / 2); const dist = Math.sqrt(dx*dx + dy*dy); if (dist > maxRadius) { dx = (dx/dist)*maxRadius; dy = (dy/dist)*maxRadius; } joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`; joystickVector.x = dx / maxRadius; joystickVector.y = -dy / maxRadius; };
-            joystickZone.addEventListener('touchstart', (e) => { e.preventDefault(); if (joystickTouchId === null) { joystickTouchId = e.changedTouches[0].identifier; updateJoystick(e.changedTouches[0]); } }, {passive: false});
-            joystickZone.addEventListener('touchmove', (e) => { e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === joystickTouchId) { updateJoystick(e.changedTouches[i]); break; } } }, {passive: false});
-            const endJoystick = (e) => { e.preventDefault(); for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === joystickTouchId) { resetJoystick(); break; } } };
-            joystickZone.addEventListener('touchend', endJoystick, {passive: false}); joystickZone.addEventListener('touchcancel', resetJoystick, {passive: false});
 
-            function addTouchLookToButton(btnId) {
-                const btn = document.getElementById(btnId);
-                let btnTouchId = null; let btnPrevTouch = {x:0, y:0};
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault(); btnTouchId = e.changedTouches[0].identifier; btnPrevTouch.x = e.changedTouches[0].clientX; btnPrevTouch.y = e.changedTouches[0].clientY;
-                    if (btnId === 'dash-btn') isDashing = true;
-                    if (btnId === 'shoot-btn') { isShooting = true; if (isGameRunning) attemptShoot(); }
-                    if (btnId === 'jump-btn' && isGrounded && isGameRunning) { velocityY = jumpForce; isGrounded = false; }
-                    if (btnId === 'switch-weapon-btn') switchWeapon(currentWeaponIndex + 1);
-                }, {passive: false});
-                btn.addEventListener('touchmove', (e) => {
-                    e.preventDefault(); if (!isGameRunning) return;
-                    for (let i = 0; i < e.changedTouches.length; i++) {
-                        if (e.changedTouches[i].identifier === btnTouchId) {
-                            const touch = e.changedTouches[i];
-                            euler.setFromQuaternion(camera.quaternion);
-                            euler.y -= (touch.clientX - btnPrevTouch.x) * 0.005 * sensitivity;
-                            euler.x -= (touch.clientY - btnPrevTouch.y) * 0.005 * sensitivity;
-                            euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x));
+            document.addEventListener('touchstart', (e) => {
+                if(!isGameRunning) return;
+                for(let i=0; i<e.changedTouches.length; i++){
+                    let t = e.changedTouches[i];
+                    activeTouches[t.identifier] = { x: t.clientX, y: t.clientY };
+                }
+            }, {passive: false});
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isGameRunning) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    let t = e.changedTouches[i];
+                    if (t.identifier !== joystickTouchId) {
+                        if (activeTouches[t.identifier]) {
+                            let prev = activeTouches[t.identifier];
+                            let dx = t.clientX - prev.x;
+                            let dy = t.clientY - prev.y;
+                            
+                            euler.setFromQuaternion(camera.quaternion); 
+                            euler.y -= dx * 0.005 * sensitivity; 
+                            euler.x -= dy * 0.005 * sensitivity; 
+                            euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); 
                             camera.quaternion.setFromEuler(euler);
-                            btnPrevTouch.x = touch.clientX; btnPrevTouch.y = touch.clientY; break;
+                            
+                            activeTouches[t.identifier] = { x: t.clientX, y: t.clientY };
                         }
                     }
-                }, {passive: false});
-                const resetBtnTouch = (e) => {
-                    e.preventDefault();
-                    for (let i = 0; i < e.changedTouches.length; i++) {
-                        if (e.changedTouches[i].identifier === btnTouchId) {
-                            btnTouchId = null;
-                            if (btnId === 'dash-btn') isDashing = false;
-                            if (btnId === 'shoot-btn') isShooting = false;
-                            break;
-                        }
-                    }
-                };
-                btn.addEventListener('touchend', resetBtnTouch, {passive: false}); btn.addEventListener('touchcancel', resetBtnTouch, {passive: false});
-            }
+                }
+            }, {passive: false});
 
-            addTouchLookToButton('dash-btn'); addTouchLookToButton('shoot-btn'); addTouchLookToButton('jump-btn'); addTouchLookToButton('switch-weapon-btn');
+            const endTouch = (e) => {
+                for(let i=0; i<e.changedTouches.length; i++){
+                    let t = e.changedTouches[i];
+                    delete activeTouches[t.identifier];
+                }
+            };
+            document.addEventListener('touchend', endTouch, {passive: false});
+            document.addEventListener('touchcancel', endTouch, {passive: false});
+
+            const updateJoystick = (touch) => { 
+                const rect = joystickZone.getBoundingClientRect(); 
+                let dx = touch.clientX - (rect.left + rect.width / 2); 
+                let dy = touch.clientY - (rect.top + rect.height / 2); 
+                const dist = Math.sqrt(dx*dx + dy*dy); 
+                if (dist > maxRadius) { dx = (dx/dist)*maxRadius; dy = (dy/dist)*maxRadius; } 
+                joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`; 
+                joystickVector.x = dx / maxRadius; joystickVector.y = -dy / maxRadius; 
+            };
+            
+            joystickZone.addEventListener('touchstart', (e) => { 
+                e.stopPropagation(); 
+                if (joystickTouchId === null) { 
+                    joystickTouchId = e.changedTouches[0].identifier; 
+                    updateJoystick(e.changedTouches[0]); 
+                } 
+            }, {passive: false});
+            joystickZone.addEventListener('touchmove', (e) => { 
+                e.stopPropagation();
+                for (let i = 0; i < e.changedTouches.length; i++) { 
+                    if (e.changedTouches[i].identifier === joystickTouchId) { updateJoystick(e.changedTouches[i]); break; } 
+                } 
+            }, {passive: false});
+            const endJoystick = (e) => { 
+                e.stopPropagation();
+                for (let i = 0; i < e.changedTouches.length; i++) { 
+                    if (e.changedTouches[i].identifier === joystickTouchId) { resetJoystick(); break; } 
+                } 
+            };
+            joystickZone.addEventListener('touchend', endJoystick, {passive: false}); 
+            joystickZone.addEventListener('touchcancel', endJoystick, {passive: false});
+
+            document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { isShooting = true; if (isGameRunning) attemptShoot(); }, {passive: false}); 
+            document.getElementById('shoot-btn').addEventListener('touchend', (e) => { isShooting = false; }, {passive: false});
+            document.getElementById('switch-weapon-btn').addEventListener('touchstart', (e) => { switchWeapon(currentWeaponIndex + 1); }, {passive: false});
+            document.getElementById('jump-btn').addEventListener('touchstart', (e) => { if(isGrounded && isGameRunning){ velocityY = jumpForce; isGrounded = false; } }, {passive: false});
+            document.getElementById('dash-btn').addEventListener('touchstart', (e) => { isDashing = true; }, {passive: false});
+            document.getElementById('dash-btn').addEventListener('touchend', (e) => { isDashing = false; }, {passive: false});
         }
         function resetJoystick() { joystickTouchId = null; joystickVector = { x: 0, y: 0 }; document.getElementById('joystick-knob').style.transform = `translate(0px, 0px)`; }
 
@@ -1102,8 +1230,8 @@
                 const moveVec = new THREE.Vector3(); moveVec.add(camDir.multiplyScalar(-velocity.z * delta)); moveVec.add(camRight.multiplyScalar(-velocity.x * delta));
                 
                 const checkOrigin = camera.position.clone(); checkOrigin.y -= 0.6;
-                if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 0.6 && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
-                if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 0.6 && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
+                if (Math.abs(moveVec.x) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(Math.sign(moveVec.x), 0, 0)); let interX = raycaster.intersectObjects(collidableMeshes); if (interX.length > 0 && interX[0].distance < 0.6 && interX[0].face && Math.abs(interX[0].face.normal.y) < 0.5) moveVec.x = 0; }
+                if (Math.abs(moveVec.z) > 0.001) { raycaster.set(checkOrigin, new THREE.Vector3(0, 0, Math.sign(moveVec.z))); let interZ = raycaster.intersectObjects(collidableMeshes); if (interZ.length > 0 && interZ[0].distance < 0.6 && interZ[0].face && Math.abs(interZ[0].face.normal.y) < 0.5) moveVec.z = 0; }
 
                 camera.position.x += moveVec.x; camera.position.x = Math.max(-48, Math.min(48, camera.position.x)); 
                 camera.position.z += moveVec.z; camera.position.z = Math.max(-48, Math.min(48, camera.position.z));
