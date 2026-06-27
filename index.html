@@ -58,7 +58,8 @@
 
         .settings { margin-bottom: 20px; text-align: center; background: rgba(0,0,0,0.3); padding: 10px 20px; border-radius: 10px; border: 1px solid #333; }
         
-        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ff0000; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 98; }
+        #purple-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #aa00ff; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 99; }
         
         /* リスト系UI（ランキング・コレクション等） */
         .list-container { width: 90%; max-width: 600px; max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.5); border: 1px solid #444; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: left; }
@@ -77,6 +78,11 @@
         #timer { font-size: 44px; color: #fff; font-weight: bold; font-family: monospace; letter-spacing: 2px; }
         #team-score { font-size: 24px; color: #fff; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
 
+        /* 究極技発動ボタン */
+        #ultimate-btn { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 12px 25px; background: rgba(170, 0, 255, 0.7); border: 3px solid #aa00ff; border-radius: 8px; color: white; font-weight: bold; font-size: 18px; text-align: center; cursor: pointer; text-shadow: 0 0 10px #fff; box-shadow: 0 0 20px #aa00ff; pointer-events: auto; z-index: 102; display: none; transition: 0.2s; }
+        #ultimate-btn:hover { background: rgba(200, 50, 255, 0.9); transform: translateX(-50%) scale(1.05); }
+        #ultimate-btn.disabled { background: rgba(50, 50, 50, 0.5); border-color: #555; color: #888; box-shadow: none; text-shadow: none; pointer-events: none; }
+
         /* モバイルUI */
         #mobile-controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         #joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 160px; height: 160px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(0, 255, 204, 0.3); border-radius: 50%; pointer-events: auto; touch-action: none; }
@@ -94,6 +100,7 @@
     <div id="ui">
         <div id="touch-look-zone"></div>
         <div id="damage-overlay"></div>
+        <div id="purple-flash"></div>
         <div id="floating-texts"></div>
         <div id="crosshair">✛</div>
         
@@ -101,7 +108,7 @@
             <p>【 初心者ガイド 】</p>
             <p><span class="tutorial-key">W A S D</span> 移動 / <span class="tutorial-key">Space</span> ジャンプ</p>
             <p><span class="tutorial-key">左クリック</span> 射撃 / <span class="tutorial-key">Shift</span> ダッシュ</p>
-            <p style="color:#ffaa00; font-size:20px; margin-top:10px;">★敵を倒してレベルアップしよう！</p>
+            <p style="color:#ffaa00; font-size:18px; margin-top:10px;">★画面下のボタン(PCは右クリック/4キー)で虚式「紫」発動！(1回限定)</p>
         </div>
 
         <div id="mission-hud">MISSION: 敵を5体倒す (0/5)</div>
@@ -110,6 +117,8 @@
             <div id="timer">02:00</div>
             <div id="team-score"><span style="color: #00bbff;">BLUE: 5</span> | <span style="color: #ff3355;">RED: 5</span></div>
         </div>
+
+        <div id="ultimate-btn">HOLLOW PURPLE (虚式「紫」)<br><span style="font-size:12px;">Right Click / 4 Key</span></div>
 
         <div id="mobile-controls">
             <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -145,7 +154,7 @@
                 <button class="btn-option active" data-class="soldier">SOLDIER<span>バランス標準</span></button>
                 <button class="btn-option" data-class="tank">TANK<span>高HP/硬い/鈍足</span></button>
                 <button class="btn-option" data-class="scout">SCOUT<span>超高速/低HP</span></button>
-                <button class="btn-option" data-class="berserker">BERSERKER<span>高火力/被ダメ増</span></button>
+                <button class="btn-option" data-class="berserker">BERSERKER<span>高火力/紙装甲</span></button>
             </div>
 
             <div class="section-title">モード (MODE)</div>
@@ -191,7 +200,7 @@
                 <h3 style="color:#00ffcc;">ENEMY</h3>
                 <p>・ドローン: HP100。プレイヤーを追尾する。<br>・アリーナボス: HP3000。一定スコアで乱入。全方位レーザーと高速突進を放つ。</p>
                 <h3 style="color:#ff0055; margin-top:15px;">WEAPON</h3>
-                <p>・NEON SHOTGUN: 近距離特化。反動大。<br>・PLASMA ASSAULT: 中距離連射型。<br>・RAILGUN SNIPER: 遠距離一撃必殺。隙が大きい。</p>
+                <p>・NEON SHOTGUN: 近距離特化。反動大。<br>・PLASMA ASSAULT: 中距離連射型。<br>・RAILGUN SNIPER: 遠距離一撃必殺。隙が大きい。<br><span style="color:#aa00ff; font-weight:bold;">・HOLLOW PURPLE (虚式「紫」): 1マッチに1度だけ放てる究極奥義。圧倒的な破壊力を誇る。</span></p>
             </div>
 
             <div id="tab-backup" class="list-container col-content hidden">
@@ -292,6 +301,13 @@
                 gain.gain.setValueAtTime(0.3, now);
                 gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
                 osc.start(now); osc.stop(now + 0.5);
+            } else if (type === 'purple') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(50, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 1.0);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 2.0);
+                osc.start(now); osc.stop(now + 2.0);
             }
         }
 
@@ -357,6 +373,9 @@
             }
         });
 
+        // 右クリックメニューの無効化（PCでの究極技発動のため）
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         let scene, camera, renderer;
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
@@ -379,6 +398,12 @@
         let isDashing = false, isStaminaExhausted = false;
 
         let gameTimer = 120, isTimeUp = false, myTeam = 'blue';
+
+        // 究極技の管理
+        let hasUsedUltimate = false;
+        let isUltimateCharging = false;
+        let ultimateChargeTime = 0;
+        let ultimateGroup = null;
 
         // 画面揺れ用変数
         let screenShake = 0, gameTimeElapsed = 0;
@@ -403,7 +428,7 @@
         let currentWeaponIndex = 0, weaponGroups = [], lastFireTime = 0, isReloading = false;
 
         let enemies = [], bots = [], bosses = [], otherPlayers = {};
-        let particles = [], trails = [];
+        let particles = [], trails = [], ultimateBeams = [];
         let muzzleLight, weaponLight, envPoints;
         let ambientLight, dirLight, stageGroup;
         
@@ -678,6 +703,26 @@
             const rgGrip2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.15, 0.1), woodMat); rgGrip2.position.set(0, -0.15, 0.2); rgGrip2.rotation.x = -Math.PI/6;
             rgGroup.add(rgBody, rail1, rail2, rgEnergy, rgScope, rgGrip2); weaponGroups.push(rgGroup);
 
+            // 虚式「紫」用モデル (チャージ時の魔法陣/光球)
+            ultimateGroup = new THREE.Group();
+            const hpCoreGeo = new THREE.SphereGeometry(0.2, 16, 16);
+            const hpCoreMat = getMaterial(0xffffff, true, 1.0, THREE.AdditiveBlending);
+            const hpCoreMesh = new THREE.Mesh(hpCoreGeo, hpCoreMat);
+            const hpAuraGeo = new THREE.SphereGeometry(0.4, 16, 16);
+            const hpAuraMat = getMaterial(0xaa00ff, true, 0.6, THREE.AdditiveBlending);
+            const hpAuraMesh = new THREE.Mesh(hpAuraGeo, hpAuraMat);
+            
+            // 蒼と赫の球
+            const blueOrb = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), getMaterial(0x00dfff, true, 0.9, THREE.AdditiveBlending));
+            blueOrb.position.set(-0.6, 0, 0); blueOrb.name = "blueOrb";
+            const redOrb = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), getMaterial(0xff0055, true, 0.9, THREE.AdditiveBlending));
+            redOrb.position.set(0.6, 0, 0); redOrb.name = "redOrb";
+            
+            ultimateGroup.add(hpCoreMesh, hpAuraMesh, blueOrb, redOrb);
+            ultimateGroup.position.set(0, -0.2, -1.0); // 画面中央下に配置
+            ultimateGroup.visible = false;
+            camera.add(ultimateGroup);
+
             weaponGroups.forEach((group, index) => { group.position.set(0.25, -0.25, -0.5); group.visible = (index === currentWeaponIndex); camera.add(group); });
         }
 
@@ -885,6 +930,11 @@
                     isPaused = false;
                 }
             };
+
+            // 究極技ボタン (モバイル用)
+            document.getElementById('ultimate-btn').onclick = () => {
+                if (isGameRunning && !isPaused) fireUltimate();
+            };
         }
 
         function updateCollectionUI() {
@@ -966,7 +1016,6 @@
         }
 
         function showMainMenu() {
-            // CSSのdisplayを切り替えるだけで要素を復活させる（イベントリスナーは剥がれない）
             document.getElementById('start-screen').style.display = 'flex';
         }
 
@@ -1014,6 +1063,7 @@
             document.getElementById('hud').style.display = 'none'; 
             document.getElementById('score-display').style.display = 'none';
             document.getElementById('match-ui').style.display = 'none';
+            document.getElementById('ultimate-btn').style.display = 'none';
             if (isTouchDevice) { document.getElementById('touch-look-zone').style.display = 'none'; document.getElementById('mobile-controls').style.display = 'none'; resetJoystick(); isShooting = false; isDashing = false;}
             isGameRunning = false;
         }
@@ -1024,8 +1074,16 @@
 
             score = 0; gameTimer = 120; isTimeUp = false; stamina = 100; isStaminaExhausted = false; gameTimeElapsed = 0;
             pLevel = 1; pExp = 0; nextExp = 100; document.getElementById('lvl-text').innerText = `Lv. 1`; document.getElementById('exp-fill').style.width = '0%';
+            
+            // 究極技のリセットとUI表示
+            hasUsedUltimate = false;
+            const uBtn = document.getElementById('ultimate-btn');
+            uBtn.classList.remove('disabled');
+            uBtn.innerHTML = 'HOLLOW PURPLE (虚式「紫」)<br><span style="font-size:12px;">Right Click / 4 Key</span>';
+            uBtn.style.display = 'block';
+            
             setMission();
-            WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false;
+            WEAPONS.forEach(w => w.ammo = w.maxAmmo); isReloading = false; currentWeaponIndex = 0;
             document.getElementById('score').innerText = score;
             updatePlayerHpUI();
             document.getElementById('stamina-fill').style.width = '100%';
@@ -1250,29 +1308,41 @@
         class Boss {
             constructor(x, z) {
                 this.group = new THREE.Group(); 
-                this.body = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), getMaterial(0xff0000, false, 1.0, THREE.AdditiveBlending)); this.body.userData.isWall = true;
-                this.group.add(this.body); this.group.position.set(x, 5, z); scene.add(this.group);
+                this.body = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 6), getMaterial(0xff0000, false, 1.0, THREE.AdditiveBlending)); this.body.userData.isWall = true;
+                this.group.add(this.body); 
+                this.baseY = 25; // 建物よりも上の空中に固定
+                this.group.position.set(x, this.baseY, z); 
+                scene.add(this.group);
                 this.hp = 3000 * difficultyMult; this.maxHp = this.hp; this.isDead = false; this.lastFire = 0; this.state = 'IDLE'; this.stateTimer = 0;
             }
             update(delta, targetPos) {
                 if(this.isDead) return;
                 this.body.rotation.y += delta; this.body.rotation.x += delta;
+                
+                // フワフワ浮かせる
+                this.group.position.y = this.baseY + Math.sin(performance.now() * 0.002) * 3;
+
                 this.stateTimer -= delta;
                 if(this.stateTimer <= 0) {
                     const r = Math.random();
                     if(r < 0.3) { this.state = 'DASH'; this.stateTimer = 1.0; } else if (r < 0.8) { this.state = 'ATTACK'; this.stateTimer = 2.0; } else { this.state = 'IDLE'; this.stateTimer = 1.0; }
                 }
-                const dir = new THREE.Vector3().subVectors(targetPos, this.group.position); dir.y=0; dir.normalize();
-                let speed = 2.0; if(this.state === 'DASH') speed = 15.0;
+                const dir = new THREE.Vector3().subVectors(targetPos, this.group.position); dir.y=0; dir.normalize(); // 水平移動のみ
+                let speed = 5.0; if(this.state === 'DASH') speed = 20.0;
                 this.group.position.add(dir.multiplyScalar(speed * delta));
 
                 if (this.state === 'ATTACK' && performance.now() - this.lastFire > 1000) {
                     this.lastFire = performance.now(); playSound('shoot');
                     for(let i=0; i<12; i++) {
-                        const a = (i/12)*Math.PI*2; const d = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
-                        createTrail(this.group.position, d, 0xff0000, 40);
-                        if (targetPos.distanceTo(this.group.position) < 40 && Math.abs(Math.atan2(d.z, d.x) - Math.atan2(targetPos.z - this.group.position.z, targetPos.x - this.group.position.x)) < 0.15) {
-                            damagePlayer(30 * difficultyMult);
+                        const a = (i/12)*Math.PI*2; 
+                        // プレイヤーが下にいるので斜め下にレーザーを撃つ
+                        const d = new THREE.Vector3(Math.cos(a), -0.5, Math.sin(a)).normalize();
+                        createTrail(this.group.position, d, 0xff0000, 60);
+                        if (targetPos.distanceTo(this.group.position) < 60) {
+                            const targetDir = new THREE.Vector3().subVectors(targetPos, this.group.position).normalize();
+                            if (d.angleTo(targetDir) < 0.2) {
+                                damagePlayer(15 * difficultyMult); // 威力を下げた
+                            }
                         }
                     }
                 }
@@ -1339,6 +1409,168 @@
             muzzleLight.color.setHex(weapon.color); muzzleLight.intensity = 5; setTimeout(() => { muzzleLight.intensity = 0; }, 50);
         }
 
+        // --- 究極エフェクト 虚式「紫」 の発動処理 ---
+        function fireUltimate() {
+            if (hasUsedUltimate || !isGameRunning || isPaused || isReloading) return;
+            hasUsedUltimate = true;
+            
+            const uBtn = document.getElementById('ultimate-btn');
+            if(uBtn) { uBtn.classList.add('disabled'); uBtn.innerHTML = 'NO ENERGY'; }
+            
+            playSound('purple');
+            
+            // モデルを表示してチャージ開始
+            ultimateGroup.visible = true;
+            ultimateGroup.scale.setScalar(0.1);
+            const blueOrb = ultimateGroup.getObjectByName("blueOrb");
+            const redOrb = ultimateGroup.getObjectByName("redOrb");
+            if (blueOrb) blueOrb.position.set(-1.0, 0, 0);
+            if (redOrb) redOrb.position.set(1.0, 0, 0);
+            
+            isUltimateCharging = true;
+            ultimateChargeTime = 0;
+            screenShake = 1.0;
+
+            // 約0.8秒のチャージ演出後に発射
+            setTimeout(() => {
+                isUltimateCharging = false;
+                ultimateGroup.visible = false;
+                
+                // 発射時のフラッシュと特大画面揺れ
+                screenShake = 6.0; 
+                const pFlash = document.getElementById('purple-flash');
+                if(pFlash) { pFlash.style.opacity = '0.9'; setTimeout(()=> pFlash.style.opacity = '0', 250); }
+
+                const targetBodies = [];
+                if (gameMode === 'score') { targetBodies.push(...enemies.map(e => e.body)); targetBodies.push(...bosses.map(b => b.body)); }
+                else if (gameMode === 'cpu') bots.forEach(b => targetBodies.push(b.body));
+                else if (gameMode === 'online') Object.values(otherPlayers).forEach(p => { if(!p.isDead) targetBodies.push(p.body); });
+
+                const allTargets = targetBodies.concat(collidableMeshes);
+                const muzzlePos = new THREE.Vector3(0, 0, -1.0).applyMatrix4(camera.matrixWorld); 
+                
+                const isCrit = Math.random() < 0.20; // 20%の確率でクリティカル(10000ダメージ)
+                const actualDamage = isCrit ? 10000 : 7500;
+                
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                raycaster.set(camera.position, dir); 
+                // レイは太い想定なので、近いものに当たるようにする
+                const intersects = raycaster.intersectObjects(allTargets);
+                let drawLength = 1000; // 最大射程
+                
+                if (intersects.length > 0) {
+                    drawLength = Math.min(intersects[0].distance, drawLength);
+                    const hit = intersects[0].object; 
+                    if (!collidableMeshes.includes(hit)) {
+                        showDamageText(Math.floor(actualDamage), intersects[0].point, isCrit); playSound('kill');
+                        if (gameMode === 'score') { 
+                            const e = enemies.find(e => e.body === hit || e.body.children.includes(hit)); if (e) e.takeDamage(actualDamage); 
+                            const b = bosses.find(b => b.body === hit); if (b) b.takeDamage(actualDamage); 
+                        } 
+                        else if (gameMode === 'cpu') { const b = bots.find(b => b.body === hit); if (b) b.takeDamage(actualDamage); } 
+                        else if (gameMode === 'online') {
+                            for (let uid in otherPlayers) {
+                                if (otherPlayers[uid].body === hit) {
+                                    const newHp = Math.max(0, otherPlayers[uid].hp - actualDamage);
+                                    if (db) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'players', uid), { hp: newHp }).catch(()=>{});
+                                    if (newHp <= 0 && otherPlayers[uid].hp > 0) { score += 100; document.getElementById('score').innerText = score; playSound('kill'); addExp(30); }
+                                    otherPlayers[uid].hp = newHp; break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 紫レーザー＆ブラックホールエフェクトの生成
+                createHollowPurpleEffect(muzzlePos, dir, drawLength);
+                
+                // 強烈な反動
+                euler.setFromQuaternion(camera.quaternion); euler.x += 0.5; euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); camera.quaternion.setFromEuler(euler);
+
+            }, 800);
+        }
+
+        function createHollowPurpleEffect(startPos, dir, length) {
+            // 中心コア (超高輝度白色)
+            const coreGeo = new THREE.CylinderGeometry(1.5, 1.5, length, 16);
+            coreGeo.translate(0, length / 2, 0); coreGeo.rotateX(Math.PI / 2);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending });
+            const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+            coreMesh.position.copy(startPos); coreMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+            scene.add(coreMesh);
+
+            // 濃紫色グラデーションオーラ
+            const auraGeo = new THREE.CylinderGeometry(4.0, 4.0, length, 16);
+            auraGeo.translate(0, length / 2, 0); auraGeo.rotateX(Math.PI / 2);
+            const auraMat = new THREE.MeshBasicMaterial({ color: 0xaa00ff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+            const auraMesh = new THREE.Mesh(auraGeo, auraMat);
+            auraMesh.position.copy(startPos); auraMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+            scene.add(auraMesh);
+
+            ultimateBeams.push({ core: coreMesh, aura: auraMesh, life: 2.0, maxLife: 2.0 });
+
+            // 蒼と赫、雷電を表現する大量のパーティクル
+            createParticles(startPos, 0xaa00ff, 150, 20.0);
+            createParticles(startPos, 0xff0055, 100, 15.0);
+            
+            // 螺旋雷電状の粒子エフェクト
+            for (let i = 0; i < 40; i++) {
+                const angle = (i / 40) * Math.PI * 8; // 螺旋を描く
+                const spiralDist = (i / 40) * length;
+                const offset = new THREE.Vector3(Math.cos(angle) * 3, Math.sin(angle) * 3, spiralDist);
+                offset.applyQuaternion(coreMesh.quaternion);
+                const particlePos = startPos.clone().add(offset);
+                createParticles(particlePos, 0x00dfff, 5, 2.0); // 蒼の雷電
+                createParticles(particlePos, 0xff0055, 5, 2.0); // 赫の雷電
+            }
+
+            const endPos = startPos.clone().add(dir.clone().multiplyScalar(length));
+            // 着弾時: 「重力崩壊領域」紫ブラックホール生成
+            const blackholeGeo = new THREE.SphereGeometry(6, 32, 32);
+            const blackholeMat = new THREE.MeshBasicMaterial({ color: 0x4a008a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            const blackholeMesh = new THREE.Mesh(blackholeGeo, blackholeMat);
+            blackholeMesh.position.copy(endPos);
+            scene.add(blackholeMesh);
+
+            // ブラックホールの収縮アニメーション
+            let bhScale = 1.0;
+            const bhInterval = setInterval(() => {
+                bhScale -= 0.05;
+                if (bhScale <= 0) {
+                    clearInterval(bhInterval);
+                    scene.remove(blackholeMesh);
+                    blackholeGeo.dispose();
+                    blackholeMat.dispose();
+                    createParticles(endPos, 0xffffff, 100, 40.0); // 最後に消滅爆発
+                } else {
+                    blackholeMesh.scale.setScalar(bhScale);
+                    createParticles(endPos, 0xaa00ff, 15, 20.0);
+                }
+            }, 30);
+
+            createParticles(endPos, 0xaa00ff, 200, 25.0);
+            createParticles(endPos, 0xffffff, 100, 30.0);
+            
+            muzzleLight.color.setHex(0xaa00ff); muzzleLight.intensity = 30;
+            setTimeout(() => { muzzleLight.intensity = 0; }, 1000);
+        }
+
+        function updateUltimateBeams(delta) {
+            for (let i = ultimateBeams.length - 1; i >= 0; i--) {
+                let b = ultimateBeams[i]; b.life -= delta;
+                if (b.life <= 0) {
+                    scene.remove(b.core, b.aura);
+                    b.core.geometry.dispose(); b.core.material.dispose();
+                    b.aura.geometry.dispose(); b.aura.material.dispose();
+                    ultimateBeams.splice(i, 1);
+                } else {
+                    const ratio = b.life / b.maxLife;
+                    b.core.material.opacity = ratio; b.aura.material.opacity = ratio * 0.8;
+                    b.core.scale.set(ratio, 1, ratio); b.aura.scale.set(ratio, 1, ratio);
+                }
+            }
+        }
+
         // --- パフォーマンス最適化 Trail 生成 ---
         function createTrail(startPos, direction, color, length = 40) {
             const mat = getMaterial(color, true, 0.8, THREE.AdditiveBlending);
@@ -1354,8 +1586,8 @@
         }
 
         function updateWeaponUI() { const w = WEAPONS[currentWeaponIndex]; document.getElementById('weapon-name').innerText = w.name; document.getElementById('weapon-name').style.color = '#' + w.color.toString(16).padStart(6, '0'); const ammoEl = document.getElementById('ammo-display'); if (isReloading) { ammoEl.innerText = "RELOADING..."; ammoEl.style.color = "#ff0000"; } else { ammoEl.innerText = `${w.ammo} / ${w.maxAmmo}`; ammoEl.style.color = "#fff"; } const ch = document.getElementById('crosshair'); ch.style.color = '#' + w.color.toString(16).padStart(6, '0'); ch.style.textShadow = `0 0 5px #${w.color.toString(16).padStart(6, '0')}`; }
-        function switchWeapon(index) { if (isReloading || !isGameRunning || isPaused) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 1; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
-        function reload() { if (isReloading) return; isReloading = true; const weapon = WEAPONS[currentWeaponIndex]; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
+        function switchWeapon(index) { if (isReloading || !isGameRunning || isPaused) return; weaponGroups[currentWeaponIndex].visible = false; currentWeaponIndex = index; if (currentWeaponIndex >= WEAPONS.length - 1) currentWeaponIndex = 0; if (currentWeaponIndex < 0) currentWeaponIndex = WEAPONS.length - 2; const group = weaponGroups[currentWeaponIndex]; group.visible = true; group.position.set(0.25, -0.5, -0.2); group.rotation.x = Math.PI / 4; let t = 0; const anim = setInterval(() => { t += 0.2; group.position.y += (-0.25 - group.position.y) * 0.4; group.position.z += (-0.5 - group.position.z) * 0.4; group.rotation.x += (0 - group.rotation.x) * 0.4; if (t >= 1) { clearInterval(anim); group.position.set(0.25, -0.25, -0.5); group.rotation.x = 0; } }, 20); updateWeaponUI(); }
+        function reload() { if (isReloading) return; const weapon = WEAPONS[currentWeaponIndex]; if (weapon.ammo >= weapon.maxAmmo) return; isReloading = true; updateWeaponUI(); const activeGroup = weaponGroups[currentWeaponIndex]; let t = 0; const reloadAnim = setInterval(() => { t += 0.1; activeGroup.rotation.x = Math.sin(t) * 0.5; activeGroup.position.y = -0.25 - Math.sin(t) * 0.2; if (t > Math.PI) { clearInterval(reloadAnim); activeGroup.rotation.x = 0; activeGroup.position.y = -0.25; weapon.ammo = weapon.maxAmmo; isReloading = false; updateWeaponUI(); } }, weapon.reloadTime / (Math.PI / 0.1)); }
 
         function setupMouseControls() {
             let isDragging = false;
@@ -1371,11 +1603,16 @@
                     euler.setFromQuaternion(camera.quaternion); euler.y -= (event.movementX || 0) * 0.002 * sensitivity; euler.x -= (event.movementY || 0) * 0.002 * sensitivity; euler.x = Math.max(-PI_2 + 0.1, Math.min(PI_2 - 0.1, euler.x)); camera.quaternion.setFromEuler(euler); 
                 } 
             });
-            document.addEventListener('mousedown', (event) => { if ((document.pointerLockElement === document.body || !isTouchDevice) && event.button === 0) { isShooting = true; if (isGameRunning) attemptShoot(); } });
+            document.addEventListener('mousedown', (event) => { 
+                if ((document.pointerLockElement === document.body || !isTouchDevice)) { 
+                    if(event.button === 0) { isShooting = true; if (isGameRunning) attemptShoot(); }
+                    else if (event.button === 2) { if (isGameRunning) fireUltimate(); } // 右クリックで紫
+                } 
+            });
             document.addEventListener('mouseup', (event) => { if (event.button === 0) isShooting = false; });
         }
 
-        function onKeyDown(event) { if (!isGameRunning || isPaused) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
+        function onKeyDown(event) { if (!isGameRunning || isPaused) return; keys[event.code] = true; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = true; break; case 'ArrowLeft': case 'KeyA': moveLeft = true; break; case 'ArrowDown': case 'KeyS': moveBackward = true; break; case 'ArrowRight': case 'KeyD': moveRight = true; break; case 'Digit1': switchWeapon(0); break; case 'Digit2': switchWeapon(1); break; case 'Digit3': switchWeapon(2); break; case 'Digit4': fireUltimate(); break; case 'Space': if(isGrounded){ velocityY = jumpForce; isGrounded = false; } break; } }
         function onKeyUp(event) { keys[event.code] = false; switch (event.code) { case 'ArrowUp': case 'KeyW': moveForward = false; break; case 'ArrowLeft': case 'KeyA': moveLeft = false; break; case 'ArrowDown': case 'KeyS': moveBackward = false; break; case 'ArrowRight': case 'KeyD': moveRight = false; break; } }
         function onWheel(event) { if (isGameRunning && !isPaused) switchWeapon(event.deltaY > 0 ? currentWeaponIndex + 1 : currentWeaponIndex - 1); }
 
@@ -1446,7 +1683,7 @@
             for (let i = particles.length - 1; i >= 0; i--) { 
                 let p = particles[i]; p.life -= delta; 
                 if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); } 
-                else { p.velocity.y -= 9.8 * delta; p.mesh.position.add(p.velocity.clone().multiplyScalar(delta)); p.mesh.rotation.x += 10 * delta; p.mesh.scale.setScalar(Math.max(p.life / p.maxLife, 0.01)); if (p.mesh.position.y < 0.1) { p.mesh.position.y = 0.1; p.velocity.y *= -0.5; } } 
+                else { p.velocity.y -= 9.8 * delta; p.mesh.position.add(p.velocity.clone().multiplyScalar(delta)); p.mesh.rotation.x += 10 * delta; p.mesh.rotation.y += 10 * delta; p.mesh.scale.setScalar(Math.max(p.life / p.maxLife, 0.01)); if (p.mesh.position.y < 0.1) { p.mesh.position.y = 0.1; p.velocity.y *= -0.5; } } 
             } 
         }
 
@@ -1587,8 +1824,28 @@
 
                 const activeGroup = weaponGroups[currentWeaponIndex];
                 if (activeGroup) {
+                    activeGroup.scale.setScalar(1.0);
                     if (isMovingInput && !isReloading && isGrounded) { activeGroup.position.y = -0.25 + Math.sin(time * 0.01) * 0.02; activeGroup.position.x = 0.25 + Math.cos(time * 0.005) * 0.01; } 
                     else if (!isReloading) { activeGroup.position.y += (-0.25 - activeGroup.position.y) * 0.1; activeGroup.position.x += (0.25 - activeGroup.position.x) * 0.1; }
+                }
+
+                // 虚式「紫」チャージ中のオーラアニメーション
+                if (ultimateGroup && isUltimateCharging) {
+                    ultimateChargeTime += delta;
+                    ultimateGroup.rotation.y += delta * 10;
+                    ultimateGroup.rotation.x += delta * 5;
+                    const scale = 1.0 + ultimateChargeTime * 2.0;
+                    ultimateGroup.scale.setScalar(scale);
+
+                    // 蒼と赫の球を引き寄せる演出
+                    const blueOrb = ultimateGroup.getObjectByName("blueOrb");
+                    const redOrb = ultimateGroup.getObjectByName("redOrb");
+                    if (blueOrb && redOrb) {
+                        const distance = Math.max(0, 1.0 - (ultimateChargeTime * 1.5));
+                        blueOrb.position.set(-distance, 0, 0);
+                        redOrb.position.set(distance, 0, 0);
+                    }
+                    createParticles(ultimateGroup.position.clone().applyMatrix4(camera.matrixWorld), 0xaa00ff, 5, 2.0);
                 }
 
                 if (gameMode === 'score') {
@@ -1627,7 +1884,7 @@
                 camera.position.add(camOffset); renderer.render(scene, camera); camera.position.sub(camOffset);
             } else { renderer.render(scene, camera); }
 
-            updateParticles(delta); updateTrails(delta);
+            updateParticles(delta); updateTrails(delta); updateUltimateBeams(delta);
         }
 
         function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
